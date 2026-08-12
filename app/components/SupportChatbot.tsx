@@ -28,31 +28,34 @@ export default function SupportChatbot() {
   }
 
   return (
-    <div style={{ position: 'fixed', bottom: 24, right: 24, zIndex: 40 }}>
+    <div className="fixed bottom-6 right-6 z-40">
       {open ? (
-        <div style={{ width: 320, background: 'var(--cream)', border: '1px solid var(--line)', boxShadow: '0 12px 30px rgba(76,60,46,.18)' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px 16px', borderBottom: '1px solid var(--line)' }}>
-            <strong style={{ fontSize: 13 }}>Support</strong>
-            <button onClick={() => setOpen(false)} aria-label="Close chat" style={{ border: 0, background: 'transparent', cursor: 'pointer' }}>
+        <div className="w-[320px] border border-line bg-cream shadow-[0_12px_30px_rgba(76,60,46,.18)]">
+          <div className="flex items-center justify-between border-b border-line px-4 py-[14px]">
+            <strong className="text-[13px]">Support</strong>
+            <button onClick={() => setOpen(false)} aria-label="Close chat" className="cursor-pointer border-0 bg-transparent">
               <X size={16} />
             </button>
           </div>
-          <div style={{ maxHeight: 260, overflowY: 'auto', padding: 14, display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <div className="flex max-h-[260px] flex-col gap-[10px] overflow-y-auto p-[14px]">
             {messages.map((m, i) => (
-              <div key={i} style={{ fontSize: 13, color: m.role === 'user' ? 'var(--brown)' : 'var(--brown-soft)', textAlign: m.role === 'user' ? 'right' : 'left' }}>
+              <div
+                key={i}
+                className={`text-[13px] ${m.role === 'user' ? 'text-right text-brown' : 'text-left text-brown-soft'}`}
+              >
                 {m.text}
               </div>
             ))}
           </div>
-          <div style={{ display: 'flex', borderTop: '1px solid var(--line)' }}>
+          <div className="flex border-t border-line">
             <input
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && send()}
               placeholder="Ask a question…"
-              style={{ flex: 1, border: 0, padding: 12, fontSize: 13, outline: 'none', background: 'transparent' }}
+              className="flex-1 border-0 bg-transparent p-3 text-[13px] outline-none"
             />
-            <button onClick={send} aria-label="Send" style={{ border: 0, background: 'transparent', padding: '0 14px', cursor: 'pointer' }}>
+            <button onClick={send} aria-label="Send" className="cursor-pointer border-0 bg-transparent px-[14px]">
               <Send size={16} />
             </button>
           </div>
@@ -61,8 +64,7 @@ export default function SupportChatbot() {
         <button
           onClick={() => setOpen(true)}
           aria-label="Open support chat"
-          className="button button-dark"
-          style={{ borderRadius: '50%', width: 52, height: 52, padding: 0 }}
+          className="flex h-[52px] w-[52px] cursor-pointer items-center justify-center rounded-full border border-transparent bg-brown p-0 text-cream transition duration-[.25s] hover:-translate-y-0.5 hover:shadow-[0_8px_24px_rgba(76,60,46,.16)]"
         >
           <MessageCircle size={20} />
         </button>

@@ -9,14 +9,14 @@ export default function SeasonalBanner() {
   if (!visible) return null;
 
   return (
-    <div style={{ background: 'var(--brown)', color: 'var(--cream)', textAlign: 'center', padding: '10px 40px', fontSize: 12, letterSpacing: '.04em', position: 'relative' }}>
-      <Link href="/sale" style={{ borderBottom: '1px solid var(--gold)', paddingBottom: 2 }}>
+    <div className="relative bg-brown px-10 py-[10px] text-center text-xs tracking-[.04em] text-cream">
+      <Link href="/sale" className="border-b border-gold pb-[2px]">
         Advent sale — 15% off journals and wood verses, this week only
       </Link>
       <button
         onClick={() => setVisible(false)}
         aria-label="Dismiss banner"
-        style={{ position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)', border: 0, background: 'transparent', color: 'var(--cream)', cursor: 'pointer' }}
+        className="absolute right-[14px] top-1/2 -translate-y-1/2 cursor-pointer border-0 bg-transparent text-cream"
       >
         <X size={14} />
       </button>

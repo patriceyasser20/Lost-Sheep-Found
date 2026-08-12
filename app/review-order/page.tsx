@@ -35,41 +35,46 @@ export default function ReviewOrderPage() {
   }
 
   return (
-    <main className="content-page" style={{ maxWidth: 700 }}>
-      <p className="eyebrow">Step 1 of 2</p>
-      <h2>Review your order</h2>
+    <main className="mx-auto max-w-[700px] px-[30px] pb-[120px] pt-[70px]">
+      <p className="mb-[6px] text-[10px] uppercase tracking-[.16em] text-gold">Step 1 of 2</p>
+      <h2 className="mt-[30px] mb-4 font-display text-[clamp(30px,3.6vw,38px)] font-medium tracking-[-.03em]">Review your order</h2>
 
-      <div className="cart-list">
+      <div className="border-t border-line">
         {lines.map(({ line, product }) => (
-          <div className="cart-row" key={line.id} style={{ gridTemplateColumns: '1fr auto' }}>
-            <div className="cart-item-info">
-              <h3>{product!.name} × {line.qty}</h3>
-              <p>{product!.tag}</p>
+          <div className="grid grid-cols-[1fr_auto] items-center gap-[22px] border-b border-line py-[26px]" key={line.id}>
+            <div>
+              <h3 className="mb-[6px] text-lg tracking-[-.01em]">{product!.name} × {line.qty}</h3>
+              <p className="m-0 text-[11px] tracking-[.04em] text-brown-soft">{product!.tag}</p>
             </div>
-            <div className="cart-line-price">EGP {product!.price * line.qty}</div>
+            <div className="min-w-[80px] text-right text-sm">EGP {product!.price * line.qty}</div>
           </div>
         ))}
       </div>
 
-      <div className="promo-row" style={{ marginTop: 24 }}>
-        <input type="text" placeholder="Promo code" value={promo} onChange={(e) => setPromo(e.target.value)} />
-        <button onClick={applyPromo}>Apply</button>
+      <div className="mt-6 flex gap-2">
+        <input
+          type="text"
+          placeholder="Promo code"
+          value={promo}
+          onChange={(e) => setPromo(e.target.value)}
+          className="flex-1 border border-line bg-cream px-3 py-[11px] text-[13px] outline-none"
+        />
+        <button onClick={applyPromo} className="cursor-pointer border border-brown bg-transparent px-4 text-[11px] uppercase tracking-[.06em] text-brown">Apply</button>
       </div>
-      {promoMessage && <p className="form-note">{promoMessage}</p>}
+      {promoMessage && <p className="mt-1 text-xs text-brown-soft">{promoMessage}</p>}
 
-      <div className="summary-row"><span>Subtotal</span><span>EGP {subtotal}</span></div>
-      {discount > 0 && <div className="summary-row"><span>Discount</span><span>-EGP {discount}</span></div>}
-      <div className="summary-row total"><span>Total (before shipping)</span><span>EGP {subtotal - discount}</span></div>
+      <div className="flex justify-between border-b border-line py-[11px] text-[13.5px] text-brown-soft"><span>Subtotal</span><span className="text-brown">EGP {subtotal}</span></div>
+      {discount > 0 && <div className="flex justify-between border-b border-line py-[11px] text-[13.5px] text-brown-soft"><span>Discount</span><span className="text-brown">-EGP {discount}</span></div>}
+      <div className="flex justify-between pt-[18px] text-base text-brown"><span>Total (before shipping)</span><span className="font-display text-xl">EGP {subtotal - discount}</span></div>
 
       <button
-        className="button button-dark button-block"
-        style={{ marginTop: 22 }}
+        className="mt-[22px] flex w-full min-h-[46px] items-center justify-center gap-[10px] border border-transparent bg-brown px-5 text-[11px] uppercase tracking-[.08em] text-cream transition duration-200 hover:-translate-y-0.5 hover:shadow-[0_8px_24px_rgba(76,60,46,.16)]"
         onClick={() => router.push('/checkout')}
       >
         Continue to shipping <ArrowRight size={16} />
       </button>
-      <Link href="/cart" className="text-link" style={{ display: 'inline-block', marginTop: 16 }}>
-        Back to cart <span>→</span>
+      <Link href="/cart" className="mt-4 inline-block text-xs uppercase tracking-[.08em] border-b border-gold pb-[5px]">
+        Back to cart <span className="ml-[7px]">→</span>
       </Link>
     </main>
   );

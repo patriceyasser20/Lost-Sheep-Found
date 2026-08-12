@@ -6,20 +6,20 @@ import type { Product } from '../../lib/products';
 
 export default function ProductCard({ product }: { product: Product }) {
   return (
-    <div className="product-card">
+    <div className="group">
       <Link href={`/product/${product.id}`}>
-        <div className="product-placeholder">
-          <span className="product-mark">✦</span>
-          <span>{product.tag}</span>
+        <div className="relative flex aspect-[.88] flex-col items-center justify-center border border-line bg-paper-light text-gold before:absolute before:h-[67%] before:w-[58%] before:rounded-[48%_48%_4%_4%] before:border before:border-gold/[.55] before:content-['']">
+          <span className="relative z-10 text-[27px]">✦</span>
+          <span className="relative z-10 mt-[10px] text-[9px] tracking-[.15em] uppercase">{product.tag}</span>
         </div>
       </Link>
-      <div className="product-meta">
+      <div className="flex items-center justify-between px-1 py-[17px]">
         <Link href={`/product/${product.id}`}>
-          <h3>{product.name}</h3>
-          <p>{product.priceLabel}</p>
+          <h3 className="mb-1 font-display text-[22px] font-medium">{product.name}</h3>
+          <p className="text-[11px] tracking-[.05em] text-brown-soft">{product.priceLabel}</p>
         </Link>
-        <div style={{ display: 'flex', gap: 10 }}>
-          <button aria-label="Add to wishlist" style={{ border: 0, background: 'transparent', cursor: 'pointer', color: 'var(--gold)' }}>
+        <div className="flex gap-[10px]">
+          <button aria-label="Add to wishlist" className="cursor-pointer border-0 bg-transparent text-gold">
             <Heart size={16} strokeWidth={1.6} />
           </button>
           <ArrowRight size={17} />

@@ -15,16 +15,21 @@ export default function Error({
   }, [error]);
 
   return (
-    <div style={{ minHeight: '60vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '80px 24px' }}>
-      <div style={{ textAlign: 'center', maxWidth: 420 }}>
-        <div className="custom-symbol">✦</div>
-        <h2 style={{ fontSize: 30, letterSpacing: '-.03em', marginBottom: 14 }}>Something went wrong</h2>
-        <p style={{ color: 'var(--brown-soft)', marginBottom: 30 }}>
+    <div className="flex min-h-[60vh] items-center justify-center px-6 py-20">
+      <div className="max-w-[420px] text-center">
+        <div className="mb-[18px] text-[22px] text-[#c2a97e]">✦</div>
+        <h2 className="mb-[14px] text-[30px] tracking-[-.03em]">Something went wrong</h2>
+        <p className="mb-[30px] text-brown-soft">
           We hit an unexpected error. Please try again, or head back to the homepage.
         </p>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 20 }}>
-          <button onClick={() => reset()} className="button button-dark">Try again</button>
-          <Link href="/" className="text-link">Return home</Link>
+        <div className="flex items-center justify-center gap-5">
+          <button
+            onClick={() => reset()}
+            className="inline-flex min-h-[46px] items-center justify-center gap-[10px] border border-transparent bg-brown px-5 text-[11px] uppercase tracking-[.08em] text-cream transition duration-200 hover:-translate-y-0.5 hover:shadow-[0_8px_24px_rgba(76,60,46,.16)]"
+          >
+            Try again
+          </button>
+          <Link href="/" className="text-xs uppercase tracking-[.08em] border-b border-gold pb-[5px]">Return home</Link>
         </div>
       </div>
     </div>

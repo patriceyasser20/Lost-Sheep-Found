@@ -24,18 +24,17 @@ export default function FirstOrderPopup() {
   if (!visible) return null;
 
   return (
-    <div
-      style={{
-        position: 'fixed', bottom: 24, left: 24, zIndex: 40, maxWidth: 300,
-        background: 'var(--brown)', color: 'var(--cream)', padding: '26px 24px',
-      }}
-    >
-      <button onClick={dismiss} aria-label="Dismiss" style={{ position: 'absolute', top: 10, right: 10, border: 0, background: 'transparent', color: 'var(--cream)', cursor: 'pointer' }}>
+    <div className="fixed bottom-6 left-6 z-40 max-w-[300px] bg-brown px-6 py-[26px] text-cream">
+      <button
+        onClick={dismiss}
+        aria-label="Dismiss"
+        className="absolute right-[10px] top-[10px] cursor-pointer border-0 bg-transparent text-cream"
+      >
         <X size={16} />
       </button>
-      <p className="eyebrow" style={{ color: '#c2a97e' }}>Welcome</p>
-      <h3 style={{ margin: '6px 0 10px', fontSize: 20 }}>10% off your first order</h3>
-      <p style={{ fontSize: 12.5, color: 'rgba(255,253,248,.75)', margin: '0 0 16px' }}>
+      <p className="text-[10px] tracking-[.22em] uppercase text-[#c2a97e]">Welcome</p>
+      <h3 className="my-[6px] mb-[10px] font-display text-xl font-medium">10% off your first order</h3>
+      <p className="mb-4 text-[12.5px] text-cream/[.75]">
         Use code <strong>FIRST10</strong> at checkout.
       </p>
     </div>

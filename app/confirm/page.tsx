@@ -14,21 +14,21 @@ export default function ConfirmPage() {
   }, []);
 
   return (
-    <main className="content-page" style={{ maxWidth: 420, paddingTop: 120, textAlign: 'center' }}>
-      <div className="custom-symbol">✦</div>
-      {status === 'checking' && <h2>Confirming your email…</h2>}
+    <main className="mx-auto max-w-[420px] px-[30px] pt-[120px] text-center">
+      <div className="mb-[18px] text-[22px] text-[#c2a97e]">✦</div>
+      {status === 'checking' && <h2 className="font-display text-3xl font-medium">Confirming your email…</h2>}
       {status === 'confirmed' && (
         <>
-          <h2>You're all set</h2>
-          <p>Your email has been confirmed.</p>
-          <Link href="/account" className="button button-dark" style={{ marginTop: 10 }}>Go to your account</Link>
+          <h2 className="font-display text-3xl font-medium">You're all set</h2>
+          <p className="mt-[14px] text-brown-soft">Your email has been confirmed.</p>
+          <Link href="/account" className="mt-[10px] inline-flex min-h-[46px] items-center justify-center gap-[10px] border border-transparent bg-brown px-5 text-[11px] uppercase tracking-[.08em] text-cream transition duration-200 hover:-translate-y-0.5 hover:shadow-[0_8px_24px_rgba(76,60,46,.16)]">Go to your account</Link>
         </>
       )}
       {status === 'error' && (
         <>
-          <h2>Couldn't confirm your email</h2>
-          <p>The link may have expired. Try signing in — we'll send a fresh one if needed.</p>
-          <Link href="/login" className="button button-dark" style={{ marginTop: 10 }}>Go to sign in</Link>
+          <h2 className="font-display text-3xl font-medium">Couldn't confirm your email</h2>
+          <p className="mt-[14px] text-brown-soft">The link may have expired. Try signing in — we'll send a fresh one if needed.</p>
+          <Link href="/login" className="mt-[10px] inline-flex min-h-[46px] items-center justify-center gap-[10px] border border-transparent bg-brown px-5 text-[11px] uppercase tracking-[.08em] text-cream transition duration-200 hover:-translate-y-0.5 hover:shadow-[0_8px_24px_rgba(76,60,46,.16)]">Go to sign in</Link>
         </>
       )}
     </main>

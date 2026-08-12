@@ -41,34 +41,32 @@ export default function FaqPage() {
 
   return (
     <main>
-
-      <section className="page-hero">
-        <p className="eyebrow">Questions & answers</p>
-        <h1>Frequently Asked</h1>
-        <p>Everything you might wonder before your order arrives.</p>
+      <section className="mx-auto max-w-[640px] px-5 pb-10 pt-[65px] text-center md:px-[30px] md:pb-[55px] md:pt-[95px]">
+        <p className="mb-[17px] block text-[10px] font-semibold uppercase tracking-[.22em] text-gold">Questions & answers</p>
+        <h1 className="my-[18px] font-display text-[clamp(46px,5.6vw,76px)] font-medium leading-[.92] tracking-[-.045em]">Frequently Asked</h1>
+        <p className="mx-auto max-w-[460px] text-[15px] leading-[1.8] text-brown-soft">Everything you might wonder before your order arrives.</p>
       </section>
 
-      <div className="faq-list">
+      <div className="mx-auto max-w-[780px] px-[30px] pb-[130px]">
         {faqs.map((faq, index) => {
           const isOpen = openIndex === index;
           return (
-            <div className={`faq-item${isOpen ? " open" : ""}`} key={faq.question}>
+            <div className="border-b border-line" key={faq.question}>
               <button
-                className="faq-question"
+                className="flex w-full cursor-pointer items-center justify-between gap-5 border-0 bg-transparent px-1 py-[26px] text-left text-brown"
                 onClick={() => setOpenIndex(isOpen ? null : index)}
                 aria-expanded={isOpen}
               >
-                <h3>{faq.question}</h3>
-                <Plus size={18} />
+                <h3 className="m-0 text-lg font-medium tracking-[-.015em]">{faq.question}</h3>
+                <Plus size={18} className={`flex-shrink-0 text-gold transition-transform duration-200 ${isOpen ? 'rotate-45' : ''}`} />
               </button>
-              <div className="faq-answer">
-                <p>{faq.answer}</p>
+              <div className={`overflow-hidden transition-[max-height] duration-300 ease-in-out ${isOpen ? 'max-h-[400px]' : 'max-h-0'}`}>
+                <p className="m-0 mx-1 mb-6 max-w-[620px] text-sm leading-[1.8] text-brown-soft">{faq.answer}</p>
               </div>
             </div>
           );
         })}
       </div>
-
     </main>
   );
 }

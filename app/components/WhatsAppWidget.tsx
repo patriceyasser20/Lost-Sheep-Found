@@ -7,12 +7,7 @@ export default function WhatsAppWidget() {
       target="_blank"
       rel="noopener noreferrer"
       aria-label="Chat on WhatsApp"
-      style={{
-        position: 'fixed', bottom: 24, right: 88, zIndex: 40,
-        width: 52, height: 52, borderRadius: '50%', background: '#25D366',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        boxShadow: '0 8px 20px rgba(0,0,0,.18)',
-      }}
+      className="fixed bottom-6 right-[88px] z-40 flex h-[52px] w-[52px] items-center justify-center rounded-full bg-[#25D366] shadow-[0_8px_20px_rgba(0,0,0,.18)]"
     >
       <svg width="24" height="24" viewBox="0 0 24 24" fill="white">
         <path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.74.46 3.44 1.32 4.94L2 22l5.31-1.39a9.9 9.9 0 0 0 4.73 1.2h.01c5.46 0 9.9-4.45 9.9-9.9C21.96 6.45 17.5 2 12.04 2Z" opacity="0" />
