@@ -3,6 +3,7 @@ export type Product = {
   id: string;
   slug: string;
   name: string;
+  sku: string;
   price: number;
   priceLabel: string;
   tag: string;
@@ -21,6 +22,7 @@ export const products: Product[] = [
     id: "the-shepherd-journal",
     slug: "the-shepherd-journal",
     name: "The Shepherd Journal",
+    sku: "LSF-SJ-001",
     price: 420,
     priceLabel: "From EGP 420",
     tag: "Personalizable",
@@ -43,6 +45,7 @@ export const products: Product[] = [
     id: "psalm-23-wood-block",
     slug: "psalm-23-wood-block",
     name: "Psalm 23 Wood Block",
+    sku: "LSF-SJ-001",
     price: 350,
     priceLabel: "EGP 350",
     tag: "Hand-finished",
@@ -65,6 +68,7 @@ export const products: Product[] = [
     id: "grace-and-truth-bookmark",
     slug: "grace-and-truth-bookmark",
     name: "Grace & Truth Bookmark",
+    sku: "LSF-SJ-001",
     price: 120,
     priceLabel: "EGP 120",
     tag: "New",
@@ -87,6 +91,7 @@ export const products: Product[] = [
     id: "still-waters-journal",
     slug: "still-waters-journal",
     name: "Still Waters Journal",
+    sku: "LSF-SJ-001",
     price: 460,
     priceLabel: "EGP 460",
     tag: "Personalizable",
@@ -109,6 +114,7 @@ export const products: Product[] = [
     id: "be-still-wood-block",
     slug: "be-still-wood-block",
     name: "Be Still Wood Block",
+    sku: "LSF-SJ-001",
     price: 340,
     priceLabel: "EGP 340",
     tag: "Hand-finished",
@@ -131,6 +137,7 @@ export const products: Product[] = [
     id: "faithful-tote",
     slug: "faithful-tote",
     name: "Faithful Tote",
+    sku: "LSF-SJ-001",
     price: 280,
     priceLabel: "EGP 280",
     tag: "New",

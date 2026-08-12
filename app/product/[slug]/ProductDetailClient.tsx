@@ -1,5 +1,6 @@
 'use client';
-
+import { useState } from 'react';
+import ProductCustomizer, { type Selections } from '../../components/ProductCustomizer';
 import Link from 'next/link';
 import { ArrowRight, Heart, ShoppingBag } from 'lucide-react';
 import ProductCard from '../../components/ProductCard';
@@ -12,6 +13,19 @@ export default function ProductDetailClient({
   product: Product;
   related: Product[];
 }) {
+  const [customSelections, setCustomSelections] = useState<Selections>({});
+  const [customComplete, setCustomComplete] = useState(!product.customizable);
+
+  const addDisabled = product.customizable && !customComplete;
+
+  function handleAddToCart() {
+    if (addDisabled) return;
+    // TODO: once cart state is lifted out of local mock arrays, pass
+    // customSelections through as line-item metadata, e.g.:
+    //   addToCart({ id: product.id, qty: 1, customization: customSelections })
+    console.log('Add to cart', { productId: product.id, customSelections });
+  }
+
   return (
     <main>
       <nav className="mx-auto flex max-w-[1240px] items-center gap-2 px-[30px] pt-7 text-[11px] uppercase tracking-[.06em] text-brown-soft">
@@ -39,27 +53,34 @@ export default function ProductDetailClient({
           </blockquote>
 
           {product.customizable && (
-            <div className="mb-[30px]">
-              <label htmlFor="personalize" className="mb-2 block text-[10.5px] uppercase tracking-[.12em] text-brown-soft">
-                Add a name or verse (optional)
-              </label>
-              <input
-                id="personalize"
-                type="text"
-                placeholder="e.g. Mariam, or Psalm 46:10"
-                className="w-full border border-line bg-cream px-[14px] py-[13px] text-sm outline-none focus:border-gold"
-              />
-            </div>
+            <ProductCustomizer
+              productId={product.id}
+              productName={product.name}
+              onChange={(selections, complete) => {
+                setCustomSelections(selections);
+                setCustomComplete(complete);
+              }}
+            />
           )}
 
           <div className="mb-9 flex gap-[14px]">
-            <button className="inline-flex min-h-[46px] items-center justify-center gap-[10px] border border-transparent bg-brown px-5 text-[11px] uppercase tracking-[.08em] text-cream transition duration-200 hover:-translate-y-0.5 hover:shadow-[0_8px_24px_rgba(76,60,46,.16)]">
+            <button
+              onClick={handleAddToCart}
+              disabled={addDisabled}
+              className="inline-flex min-h-[46px] items-center justify-center gap-[10px] border border-transparent bg-brown px-5 text-[11px] uppercase tracking-[.08em] text-cream transition duration-200 hover:-translate-y-0.5 hover:shadow-[0_8px_24px_rgba(76,60,46,.16)] disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:translate-y-0 disabled:hover:shadow-none"
+            >
               Add to cart <ShoppingBag size={16} />
             </button>
             <button className="inline-flex min-h-[46px] items-center justify-center gap-[10px] border border-brown bg-transparent px-5 text-[11px] uppercase tracking-[.08em] text-brown transition duration-200 hover:bg-brown hover:text-cream">
               Save <Heart size={16} />
             </button>
           </div>
+
+          {product.customizable && addDisabled && (
+            <p className="-mt-6 mb-9 text-[12px] text-brown-soft">
+              Choose the required options above before adding this piece to your cart.
+            </p>
+          )}
 
           <div className="border-t border-line pt-6">
             <h3 className="mb-[14px] text-[11px] font-semibold uppercase tracking-[.12em] text-brown-soft">Details</h3>

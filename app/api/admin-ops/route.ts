@@ -8,6 +8,8 @@ import { NextRequest, NextResponse } from 'next/server';
 //   process.env.SUPABASE_SERVICE_ROLE_KEY!
 // );
 
+
+
 const handlers: Record<string, (payload: any) => Promise<any>> = {
   'insert-product': async (payload) => ({ inserted: payload }),
   'update-product': async (payload) => ({ updated: payload }),
@@ -20,6 +22,15 @@ const handlers: Record<string, (payload: any) => Promise<any>> = {
   'upsert-shipping-city': async (payload) => ({ upserted: payload }),
   'set-featured': async (payload) => ({ featured: payload }),
   'get-shipping-cities': async (payload) => ({ data: [] }),
+  'insert-offer': async (payload) => ({ inserted: payload }),
+  'update-offer': async (payload) => ({ updated: payload }),
+  'delete-offer': async (payload) => ({ deleted: payload.id }),
+  'insert-sku': async (payload) => ({ inserted: payload }),
+  'update-sku': async (payload) => ({ updated: payload }),
+  'delete-sku': async (payload) => ({ deleted: payload.id }),
+  'update-order-status': async (payload) => ({ updated: payload }),
+  'insert-customization-options': async (payload) => ({ saved: payload }),
+  'delete-customization-options-for-product': async (payload) => ({ deleted: payload.productId }),
 };
 
 export async function POST(req: NextRequest) {
