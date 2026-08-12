@@ -1,67 +1,34 @@
 import Image from "next/image";
 import Link from "next/link";
-import {
-  ArrowRight,
-  BookOpen,
-  Heart,
-  Menu,
-  ShoppingBag,
-  Sparkles
-} from "lucide-react";
+import { ArrowRight, BookOpen, Heart, Sparkles } from "lucide-react";
+import { products } from "../lib/products";
 
 const collections = [
   {
     title: "Bible Journals",
     description: "Beautiful places to slow down, reflect, and write.",
-    href: "/shop?category=bible-journals",
-    icon: BookOpen
+    href: "/collection/bible-journals",
+    icon: BookOpen,
   },
   {
     title: "Wooden Verses",
     description: "Scripture made tangible for your home and heart.",
-    href: "/shop?category=wood-blocks",
-    icon: Sparkles
+    href: "/collection/wood-blocks",
+    icon: Sparkles,
   },
   {
     title: "Little Keepsakes",
     description: "Bookmarks, totes and key chains made to carry faith.",
-    href: "/shop?category=keepsakes",
-    icon: Heart
-  }
+    href: "/collection/keepsakes",
+    icon: Heart,
+  },
 ];
 
-const featured = [
-  { name: "The Shepherd Journal", price: "From EGP 420", tag: "Personalizable" },
-  { name: "Psalm 23 Wood Block", price: "EGP 350", tag: "Hand-finished" },
-  { name: "Grace & Truth Bookmark", price: "EGP 120", tag: "New" }
-];
+const featured = products.slice(0, 3);
 
 export default function Home() {
   return (
     <main>
-      <header className="site-header">
-        <div className="header-inner">
-          <button className="mobile-menu" aria-label="Open menu"><Menu size={21} /></button>
-
-          <Link href="/" className="wordmark">
-            <span className="wordmark-small">✦</span>
-            <span>lost sheep found</span>
-          </Link>
-
-          <nav className="desktop-nav" aria-label="Main navigation">
-            <Link href="/shop">Shop</Link>
-            <Link href="/shop?category=bible-journals">Journals</Link>
-            <Link href="/shop?category=wood-blocks">Wood Verses</Link>
-            <Link href="/our-story">Our Story</Link>
-          </nav>
-
-          <div className="header-actions">
-            <Link href="/shop" className="shop-link">Explore</Link>
-            <Link href="/cart" aria-label="Shopping bag"><ShoppingBag size={20} strokeWidth={1.7} /></Link>
-          </div>
-        </div>
-      </header>
-
       <section className="hero">
         <div className="hero-copy">
           <p className="eyebrow"><span>✦</span> Made with faith & intention <span>✦</span></p>
@@ -88,7 +55,7 @@ export default function Home() {
               className="hero-logo"
             />
           </div>
-          <div className="hero-note">“The Lord is my shepherd.”<br /><span>Psalm 23:1</span></div>
+          <div className="hero-note">"The Lord is my shepherd."<br /><span>Psalm 23:1</span></div>
         </div>
       </section>
 
@@ -134,8 +101,8 @@ export default function Home() {
         </div>
 
         <div className="product-grid">
-          {featured.map((product, index) => (
-            <Link href={`/products/${index + 1}`} className="product-card" key={product.name}>
+          {featured.map((product) => (
+            <Link href={`/product/${product.slug}`} className="product-card" key={product.slug}>
               <div className="product-placeholder">
                 <span className="product-mark">✦</span>
                 <span>{product.tag}</span>
@@ -143,7 +110,7 @@ export default function Home() {
               <div className="product-meta">
                 <div>
                   <h3>{product.name}</h3>
-                  <p>{product.price}</p>
+                  <p>{product.priceLabel}</p>
                 </div>
                 <ArrowRight size={17} />
               </div>
@@ -170,23 +137,10 @@ export default function Home() {
       <section className="verse-section">
         <div className="verse-ornament">✦</div>
         <blockquote>
-          “Be still, and know that I am God.”
+          "Be still, and know that I am God."
         </blockquote>
         <p>Psalm 46:10</p>
       </section>
-
-      <footer className="footer">
-        <div className="footer-brand">
-          <div className="footer-logo">lost sheep found</div>
-          <p>Faith-filled pieces for your everyday walk.</p>
-        </div>
-        <div className="footer-links">
-          <div><strong>Shop</strong><Link href="/shop">All pieces</Link><Link href="/shop?category=bible-journals">Journals</Link><Link href="/shop?category=wood-blocks">Wood verses</Link></div>
-          <div><strong>About</strong><Link href="/our-story">Our story</Link><Link href="/contact">Contact</Link></div>
-          <div><strong>Help</strong><Link href="/shipping">Shipping</Link><Link href="/returns">Returns</Link></div>
-        </div>
-        <div className="footer-bottom">© 2026 Lost Sheep Found · Made with grace.</div>
-      </footer>
     </main>
   );
 }
