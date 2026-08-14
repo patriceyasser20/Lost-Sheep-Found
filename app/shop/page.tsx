@@ -1,10 +1,8 @@
+// app/shop/page.tsx
 import type { Metadata } from 'next';
-import { products } from '../../lib/products';
+import { getProducts } from '../../lib/productsServer';
 import ShopPageClient from './ShopPageClient';
 
-// TODO once Supabase is wired: replace the local `products` import with
-//   const { data } = await supabaseClient.from('products').select('*')
-// ShopPageClient's props shape won't need to change.
 
 export const metadata: Metadata = {
   title: 'Shop All',
@@ -13,5 +11,6 @@ export const metadata: Metadata = {
 };
 
 export default async function Shop() {
+  const products = await getProducts();
   return <ShopPageClient initialProducts={products} />;
 }

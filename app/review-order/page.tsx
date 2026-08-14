@@ -1,10 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ArrowRight } from 'lucide-react';
-import { products } from '../../lib/products';
+import { getProductsClient, type Product } from '../../lib/products';
 
 const cart = [
   { id: 'the-shepherd-journal', qty: 1 },
@@ -13,9 +13,18 @@ const cart = [
 
 export default function ReviewOrderPage() {
   const router = useRouter();
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
   const [promo, setPromo] = useState('');
   const [promoMessage, setPromoMessage] = useState('');
   const [discountPct, setDiscountPct] = useState(0);
+
+  useEffect(() => {
+    getProductsClient().then((data) => {
+      setProducts(data);
+      setLoading(false);
+    });
+  }, []);
 
   const lines = cart
     .map((line) => ({ line, product: products.find((p) => p.id === line.id) }))
@@ -34,6 +43,8 @@ export default function ReviewOrderPage() {
     setDiscountPct(data.valid ? data.discount : 0);
   }
 
+  if (loading) return <main className="mx-auto max-w-[700px] px-[30px] pt-[70px]">Loading…</main>;
+
   return (
     <main className="mx-auto max-w-[700px] px-[30px] pb-[120px] pt-[70px]">
       <p className="mb-[6px] text-[10px] uppercase tracking-[.16em] text-gold">Step 1 of 2</p>
@@ -44,7 +55,7 @@ export default function ReviewOrderPage() {
           <div className="grid grid-cols-[1fr_auto] items-center gap-[22px] border-b border-line py-[26px]" key={line.id}>
             <div>
               <h3 className="mb-[6px] text-lg tracking-[-.01em]">{product!.name} × {line.qty}</h3>
-              <p className="m-0 text-[11px] tracking-[.04em] text-brown-soft">{product!.tag}</p>
+              <p className="m-0 text-[11px] tracking-[.04em] text-brown-soft">{product!.priceLabel}</p>
             </div>
             <div className="min-w-[80px] text-right text-sm">EGP {product!.price * line.qty}</div>
           </div>

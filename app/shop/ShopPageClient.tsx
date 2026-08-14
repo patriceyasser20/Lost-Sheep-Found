@@ -18,8 +18,9 @@ export default function ShopPageClient({ initialProducts }: { initialProducts: P
   const activeCategory = searchParams.get('category') ?? '';
   const customizableOnly = searchParams.get('customizable') === 'true';
 
+  // app/shop/ShopPageClient.tsx — only the filter logic changes
   const list = initialProducts.filter((p) => {
-    if (activeCategory && p.category !== activeCategory) return false;
+    if (activeCategory && p.categorySlug !== activeCategory) return false;
     if (customizableOnly && !p.customizable) return false;
     return true;
   });

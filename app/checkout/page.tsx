@@ -1,10 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+
 import { useRouter } from 'next/navigation';
 import { Lock } from 'lucide-react';
 import { createPaymobPayment } from '../actions/paymob';
-import { products } from '../../lib/products';
+import { useEffect, useState } from 'react';
+import { getProductsClient, type Product } from '../../lib/products';
 
 const cart = [
   { id: 'the-shepherd-journal', qty: 1 },
@@ -16,6 +17,8 @@ export default function CheckoutPage() {
   const [delivery, setDelivery] = useState('standard');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [products, setProducts] = useState<Product[]>([]);
+  useEffect(() => { getProductsClient().then(setProducts); }, []);
 
   const lines = cart
     .map((line) => ({ line, product: products.find((p) => p.id === line.id) }))

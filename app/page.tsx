@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, BookOpen, Heart, Sparkles } from "lucide-react";
-import { products } from "../lib/products";
+import { getFeaturedProducts } from "../lib/productsServer";
 
 const collections = [
   {
@@ -24,7 +24,7 @@ const collections = [
   },
 ];
 
-const featured = products.slice(0, 3);
+ const featured = await getFeaturedProducts(3);
 
 export default function Home() {
   return (
@@ -116,7 +116,7 @@ export default function Home() {
             <Link href={`/product/${product.slug}`} className="group" key={product.slug}>
               <div className="relative flex aspect-[.88] flex-col items-center justify-center border border-line bg-paper-light text-gold before:absolute before:h-[67%] before:w-[58%] before:rounded-[48%_48%_4%_4%] before:border before:border-gold/[.55] before:content-['']">
                 <span className="relative z-10 text-[27px]">✦</span>
-                <span className="relative z-10 mt-[10px] text-[9px] tracking-[.15em] uppercase">{product.tag}</span>
+                <span className="relative z-10 mt-[10px] text-[9px] tracking-[.15em] uppercase">{product.id}</span>
               </div>
               <div className="flex items-center justify-between px-1 py-[17px]">
                 <div>

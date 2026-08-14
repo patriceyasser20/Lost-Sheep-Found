@@ -1,15 +1,29 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Image from 'next/image';
-import { Plus, Trash2, Edit2, X } from 'lucide-react';
-import { products as seedProducts, type Product } from '../../lib/products';
+import { getProductsClient, type Product } from '../../lib/products';
+import { supabaseClient } from '../../lib/supabaseClient';
 import { adminApi } from '../../lib/adminApi';
+import { Plus, Trash2, Edit2, X, ImagePlus } from 'lucide-react';
 import {
   OPTION_PRESETS,
   type CustomizationOption,
   type OptionChoice,
 } from '../../lib/customization';
+
+// ---------- Shared style tokens ----------
+const btnPrimary =
+  'inline-flex items-center gap-2 bg-brown px-6 py-3 text-[11px] uppercase tracking-[.08em] text-cream transition hover:-translate-y-px hover:shadow-[0_8px_20px_rgba(76,60,46,.16)] disabled:opacity-50 disabled:hover:translate-y-0 disabled:hover:shadow-none';
+const btnLine =
+  'inline-flex items-center gap-2 border border-brown px-6 py-3 text-[11px] uppercase tracking-[.08em] text-brown transition hover:bg-brown hover:text-cream';
+const btnSmallPrimary =
+  'bg-brown px-3.5 py-2 text-[10px] uppercase tracking-[.08em] text-cream transition hover:opacity-90';
+const btnSmallLine =
+  'border border-line px-3.5 py-2 text-[10px] uppercase tracking-[.08em] text-brown-soft transition hover:border-brown hover:text-brown';
+const inputBase =
+  'w-full border border-line bg-cream px-4 py-3 text-sm text-brown outline-none transition placeholder:text-brown-soft/60 focus:border-gold';
+const labelBase = 'mb-2 block text-[10px] uppercase tracking-[.12em] text-brown-soft';
 
 // ---------- Customization builder ----------
 function CustomizationEditor({
@@ -19,15 +33,20 @@ function CustomizationEditor({
   options: CustomizationOption[];
   onChange: (next: CustomizationOption[]) => void;
 }) {
+  const [uploadingChoiceId, setUploadingChoiceId] = useState<string | null>(null);
+
   function addPreset(key: string) {
     const preset = OPTION_PRESETS[key];
     const id = `opt-${key.toLowerCase()}-${Date.now()}`;
-    onChange([...options, { id, product_id: '', ...preset }]);
+    onChange([...options, { id, product_id: '', sort_order: options.length, ...preset }]);
   }
 
   function addCustom() {
     const id = `opt-custom-${Date.now()}`;
-    onChange([...options, { id, product_id: '', name: '', type: 'text', required: false, options: [] }]);
+    onChange([
+      ...options,
+      { id, product_id: '', name: '', type: 'text', required: false, options: [], sort_order: options.length },
+    ]);
   }
 
   function update(id: string, patch: Partial<CustomizationOption>) {
@@ -56,94 +75,152 @@ function CustomizationEditor({
     update(optId, { options: opt.options.filter((c) => c.id !== choiceId) });
   }
 
+  async function uploadChoiceImage(optId: string, choiceId: string, file: File) {
+    setUploadingChoiceId(choiceId);
+    try {
+      const ext = file.name.split('.').pop();
+      const path = `choices/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+
+      const { error: uploadError } = await supabaseClient.storage
+        .from('product-images')
+        .upload(path, file, { cacheControl: '3600', upsert: false });
+
+      if (uploadError) throw new Error(uploadError.message);
+
+      const { data } = supabaseClient.storage.from('product-images').getPublicUrl(path);
+      updateChoice(optId, choiceId, { image: data.publicUrl });
+    } catch (err: any) {
+      alert('Failed to upload image: ' + err.message);
+    }
+    setUploadingChoiceId(null);
+  }
+
   return (
-    <div className="border border-gray-200 rounded-2xl p-5 bg-gray-50">
-      <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
-        <p className="font-medium text-sm">Customization Options</p>
+    <div className="border border-line bg-paper-light p-5">
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <p className="text-[10px] uppercase tracking-[.12em] text-brown-soft">Customization Options</p>
         <div className="flex flex-wrap gap-2">
           {Object.keys(OPTION_PRESETS).map((key) => (
             <button
               key={key}
               type="button"
               onClick={() => addPreset(key)}
-              className="text-xs border rounded-full px-3 py-1.5 bg-white hover:bg-gray-100"
+              className="border border-line bg-cream px-3 py-1.5 text-[10px] uppercase tracking-[.06em] text-brown-soft transition hover:border-brown hover:text-brown"
             >
               + {key}
             </button>
           ))}
-          <button
-            type="button"
-            onClick={addCustom}
-            className="text-xs border rounded-full px-3 py-1.5 bg-white hover:bg-gray-100"
-          >
+          <button type="button" onClick={addCustom} className={btnSmallLine}>
             <Plus size={12} className="inline -mt-0.5" /> Custom
           </button>
         </div>
       </div>
 
       {options.length === 0 && (
-        <p className="text-sm text-gray-400">No customization options yet — add Cover, Colors, Designs, Template, or a Prompt field above.</p>
+        <p className="text-sm text-brown-soft/70">
+          No customization options yet — add Cover, Colors, Designs, Template, or a Prompt field above.
+        </p>
       )}
 
       <div className="space-y-4">
         {options.map((opt) => (
-          <div key={opt.id} className="bg-white border rounded-xl p-4">
-            <div className="flex flex-wrap gap-3 items-center mb-3">
+          <div key={opt.id} className="border border-line bg-cream p-4">
+            <div className="mb-3 flex flex-wrap items-center gap-3">
               <input
                 type="text"
                 placeholder="Option name (e.g. Cover)"
                 value={opt.name}
                 onChange={(e) => update(opt.id, { name: e.target.value })}
-                className="border rounded-lg px-3 py-2 text-sm flex-1 min-w-[160px]"
+                className="min-w-[160px] flex-1 border border-line bg-cream px-3 py-2 text-sm text-brown outline-none focus:border-gold"
               />
               <select
                 value={opt.type}
                 onChange={(e) => update(opt.id, { type: e.target.value as CustomizationOption['type'] })}
-                className="border rounded-lg px-3 py-2 text-sm bg-white"
+                className="border border-line bg-cream px-3 py-2 text-sm text-brown outline-none focus:border-gold"
               >
                 <option value="select">Select (choices)</option>
                 <option value="text">Short text</option>
                 <option value="textarea">Long text / prompt</option>
               </select>
-              <label className="flex items-center gap-2 text-sm">
+              <label className="flex items-center gap-2 text-xs text-brown-soft">
                 <input
                   type="checkbox"
                   checked={opt.required}
                   onChange={(e) => update(opt.id, { required: e.target.checked })}
+                  className="accent-brown"
                 />
                 Required
               </label>
-              <button onClick={() => remove(opt.id)} className="text-red-600 hover:text-red-700 ml-auto">
+              <button onClick={() => remove(opt.id)} className="ml-auto text-brown-soft transition hover:text-[#a14b3c]" aria-label="Remove option">
                 <Trash2 size={16} />
               </button>
             </div>
 
             {opt.type === 'select' ? (
               <div className="space-y-2">
-                {opt.options.map((c) => (
-                  <div key={c.id} className="flex items-center gap-2">
-                    <input
-                      type="color"
-                      value={c.swatch || '#a1792f'}
-                      onChange={(e) => updateChoice(opt.id, c.id, { swatch: e.target.value })}
-                      className="w-8 h-8 rounded border"
-                    />
-                    <input
-                      type="text"
-                      placeholder="Choice label (e.g. Gold Foil)"
-                      value={c.label}
-                      onChange={(e) => updateChoice(opt.id, c.id, { label: e.target.value })}
-                      className="border rounded-lg px-3 py-1.5 text-sm flex-1"
-                    />
-                    <button onClick={() => removeChoice(opt.id, c.id)} className="text-red-500">
-                      <X size={14} />
-                    </button>
-                  </div>
-                ))}
+                {opt.options.map((c, i) => {
+                  const choiceKey = c.id || `choice-${i}`;
+                  const isUploading = uploadingChoiceId === choiceKey;
+                  return (
+                    <div key={choiceKey} className="flex items-center gap-3">
+                      <label
+                        className="relative flex h-16 w-16 flex-shrink-0 cursor-pointer items-center justify-center overflow-hidden border border-line bg-paper-light"
+                        title={c.image ? 'Change picture' : 'Add picture'}
+                      >
+                        {c.image ? (
+                          <Image src={c.image} alt={c.label || 'choice'} fill className="object-cover" />
+                        ) : isUploading ? (
+                          <span className="text-[10px] text-brown-soft">…</span>
+                        ) : (
+                          <ImagePlus size={20} className="text-brown-soft" />
+                        )}
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) uploadChoiceImage(opt.id, c.id, file);
+                          }}
+                        />
+                      </label>
+
+                      <input
+                        type="color"
+                        value={c.swatch || '#a1792f'}
+                        onChange={(e) => updateChoice(opt.id, c.id, { swatch: e.target.value })}
+                        className="h-6 w-6 flex-shrink-0 border border-line p-0"
+                        title="Fallback color (used if no picture is set)"
+                      />
+
+                      <input
+                        type="text"
+                        placeholder="Choice label (e.g. Gold Foil)"
+                        value={c.label}
+                        onChange={(e) => updateChoice(opt.id, c.id, { label: e.target.value })}
+                        className="flex-1 border border-line bg-cream px-3 py-1.5 text-sm text-brown outline-none focus:border-gold"
+                      />
+
+                      {c.image && (
+                        <button
+                          onClick={() => updateChoice(opt.id, c.id, { image: undefined })}
+                          className="text-[10px] uppercase tracking-[.06em] text-brown-soft transition hover:text-brown"
+                          title="Remove picture, keep color"
+                        >
+                          Clear pic
+                        </button>
+                      )}
+
+                      <button onClick={() => removeChoice(opt.id, c.id)} className="text-brown-soft transition hover:text-[#a14b3c]" aria-label="Remove choice">
+                        <X size={14} />
+                      </button>
+                    </div>
+                  );
+                })}
                 <button
                   type="button"
                   onClick={() => addChoice(opt.id)}
-                  className="text-xs text-gray-600 hover:text-black flex items-center gap-1"
+                  className="flex items-center gap-1 text-[11px] uppercase tracking-[.06em] text-brown-soft transition hover:text-brown"
                 >
                   <Plus size={12} /> Add choice
                 </button>
@@ -154,7 +231,7 @@ function CustomizationEditor({
                 placeholder="Placeholder text shown to the customer"
                 value={opt.placeholder || ''}
                 onChange={(e) => update(opt.id, { placeholder: e.target.value })}
-                className="border rounded-lg px-3 py-2 text-sm w-full"
+                className="w-full border border-line bg-cream px-3 py-2 text-sm text-brown outline-none focus:border-gold"
               />
             )}
           </div>
@@ -164,22 +241,132 @@ function CustomizationEditor({
   );
 }
 
+// ---------- Multi-image type ----------
+type ImageItem = {
+  key: string;
+  type: 'existing' | 'new';
+  url: string;
+  file?: File;
+};
+
+// ---------- Multi-image picker (with drag reorder) ----------
+function ImageManager({
+  items,
+  onAdd,
+  onRemove,
+  onReorder,
+}: {
+  items: ImageItem[];
+  onAdd: (files: File[]) => void;
+  onRemove: (key: string) => void;
+  onReorder: (from: number, to: number) => void;
+}) {
+  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+
+  return (
+    <div>
+      <input
+        type="file"
+        accept="image/*"
+        multiple
+        onChange={(e) => {
+          onAdd(Array.from(e.target.files || []));
+          e.target.value = '';
+        }}
+        className="w-full border border-line bg-cream px-4 py-2.5 text-sm text-brown-soft file:mr-4 file:border-0 file:bg-brown file:px-4 file:py-2 file:text-[10px] file:uppercase file:tracking-[.08em] file:text-cream"
+      />
+
+      {items.length > 0 && (
+        <>
+          <p className="mb-2 mt-3 text-xs text-brown-soft/70">
+            Drag to reorder — the <span className="font-medium text-brown">first image</span> is the thumbnail shown in the shop grid.
+          </p>
+          <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 md:grid-cols-5">
+            {items.map((item, i) => (
+              <div
+                key={item.key}
+                draggable
+                onDragStart={() => setDraggedIndex(i)}
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  if (draggedIndex === null || draggedIndex === i) return;
+                  onReorder(draggedIndex, i);
+                  setDraggedIndex(i);
+                }}
+                onDrop={(e) => e.preventDefault()}
+                onDragEnd={() => setDraggedIndex(null)}
+                className={`relative aspect-square cursor-move select-none border border-line transition ${
+                  draggedIndex === i ? 'scale-95 opacity-40' : ''
+                }`}
+              >
+                <Image
+                  src={item.url}
+                  alt=""
+                  fill
+                  unoptimized={item.type === 'new'}
+                  sizes="140px"
+                  className={`pointer-events-none object-cover ${i === 0 ? 'border-2 border-brown' : ''}`}
+                />
+                {i === 0 && (
+                  <span className="absolute left-1 top-1 bg-brown px-1.5 py-0.5 text-[9px] uppercase tracking-[.06em] text-cream">
+                    Thumbnail
+                  </span>
+                )}
+                {item.type === 'new' && (
+                  <span className="absolute bottom-1 left-1 bg-gold px-1.5 py-0.5 text-[9px] uppercase tracking-[.06em] text-cream">
+                    New
+                  </span>
+                )}
+                <button
+                  type="button"
+                  onClick={() => onRemove(item.key)}
+                  className="absolute -right-2 -top-2 z-10 flex h-6 w-6 items-center justify-center rounded-full bg-[#a14b3c] text-cream shadow"
+                  title="Remove image"
+                >
+                  <X size={13} />
+                </button>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
 // ---------- Main panel ----------
 export default function ProductsPanel() {
-  const [list, setList] = useState<Product[]>(seedProducts);
+  const [list, setList] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [categories, setCategories] = useState<{ id: string; name: string; slug: string }[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [quickForm, setQuickForm] = useState({ name: '', price: '', category: '', stock: '' });
 
-  const [showModal, setShowModal] = useState(false);
+  const [showForm, setShowForm] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
-  const [imagePreview, setImagePreview] = useState<string>('');
-  const [form, setForm] = useState({ name: '', price: '', description: '', category: '', isCustomizable: false });
+  const [imageItems, setImageItems] = useState<ImageItem[]>([]);
+  const [form, setForm] = useState({ name: '', price: '', description: '', categoryId: '', isCustomizable: false });
   const [customOptions, setCustomOptions] = useState<CustomizationOption[]>([]);
   const [saving, setSaving] = useState(false);
 
+  useEffect(() => {
+    getProductsClient().then((data) => {
+      setList(data);
+      setLoading(false);
+    });
+    supabaseClient
+      .from('categories')
+      .select('id, name, slug')
+      .order('name')
+      .then(({ data, error }) => {
+        if (error) console.error('categories fetch:', error.message);
+        setCategories(data || []);
+      });
+  }, []);
+
   function startQuickEdit(p: Product) {
     setEditingId(p.id);
-    setQuickForm({ name: p.name, price: String(p.price), category: p.category, stock: String(p.stock) });
+    setQuickForm({ name: p.name, price: String(p.price), category: p.categorySlug, stock: String(p.stock) });
   }
 
   function saveQuickEdit(id: string) {
@@ -190,164 +377,397 @@ export default function ProductsPanel() {
           : p
       )
     );
-    // TODO: adminApi.updateProduct(id, { name, price, stock })
+    adminApi
+      .updateProduct(id, {
+        name: quickForm.name,
+        price: Number(quickForm.price),
+        stock: Number(quickForm.stock),
+      })
+      .catch((err) => alert('Failed to save: ' + err.message));
     setEditingId(null);
   }
 
-  function openAddModal() {
+  function openAddForm() {
     setEditingProduct(null);
-    setForm({ name: '', price: '', description: '', category: '', isCustomizable: false });
+    setForm({ name: '', price: '', description: '', categoryId: '', isCustomizable: false });
     setCustomOptions([]);
-    setImagePreview('');
-    setShowModal(true);
+    setImageItems([]);
+    setShowForm(true);
   }
 
-  function openEditModal(p: Product) {
+  function closeForm() {
+    setShowForm(false);
+    setEditingProduct(null);
+  }
+
+  async function openEditForm(p: Product) {
+    const matchedCategory = categories.find((c) => c.slug === p.categorySlug);
     setEditingProduct(p);
-    setForm({ name: p.name, price: String(p.price), description: p.description, category: p.category, isCustomizable: p.customizable });
-    setCustomOptions([]); // TODO: load via getCustomizationOptions(p.id)
-    setImagePreview('');
-    setShowModal(true);
+    setForm({
+      name: p.name,
+      price: String(p.price),
+      description: p.description,
+      categoryId: matchedCategory?.id || '',
+      isCustomizable: p.customizable,
+    });
+
+    // `images` is the assumed new gallery field on Product — falls back to
+    // the single imageUrl if the type hasn't been extended yet, so existing
+    // products with only one photo still show correctly.
+    const existingUrls = p.images.length ? p.images : p.imageUrl ? [p.imageUrl] : [];
+    setImageItems(
+      existingUrls.map((url: string, i: number) => ({
+        key: `existing-${i}-${url}`,
+        type: 'existing' as const,
+        url,
+      }))
+    );
+
+    setCustomOptions([]);
+    setShowForm(true);
+
+    if (!p.customizable) return;
+
+    const { data, error } = await supabaseClient
+      .from('customization_options')
+      .select('*')
+      .eq('product_id', p.id)
+      .order('sort_order');
+
+    if (error) {
+      console.error('load customization options:', error.message);
+      return;
+    }
+
+    setCustomOptions(
+      (data || []).map((row: any) => ({
+        id: row.id,
+        product_id: row.product_id,
+        name: row.name,
+        type: row.type,
+        required: row.required,
+        options: (row.options || []).map((c: any, i: number) => ({
+          ...c,
+          id: c.id || `choice-${row.id}-${i}`,
+        })),
+        sort_order: row.sort_order,
+      }))
+    );
   }
 
-  function handleImageChange(file: File | null) {
-    if (!file) return;
-    setImagePreview(URL.createObjectURL(file));
-    // TODO: upload to Supabase storage once wired; for now this is preview-only.
+  function addNewImages(files: File[]) {
+    const newItems: ImageItem[] = files.map((file) => ({
+      key: `new-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+      type: 'new',
+      url: URL.createObjectURL(file),
+      file,
+    }));
+    setImageItems((prev) => [...prev, ...newItems]);
+  }
+
+  function removeImageItem(key: string) {
+    setImageItems((prev) => {
+      const target = prev.find((i) => i.key === key);
+      if (target?.type === 'new') URL.revokeObjectURL(target.url);
+      return prev.filter((i) => i.key !== key);
+    });
+  }
+
+  function reorderImages(from: number, to: number) {
+    setImageItems((prev) => {
+      const updated = [...prev];
+      const [moved] = updated.splice(from, 1);
+      updated.splice(to, 0, moved);
+      return updated;
+    });
+  }
+
+  async function uploadProductImage(file: File): Promise<string> {
+    const ext = file.name.split('.').pop();
+    const path = `products/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+
+    const { error: uploadError } = await supabaseClient.storage
+      .from('product-images') // <-- swap in your real bucket name if different
+      .upload(path, file, { cacheControl: '3600', upsert: false });
+
+    if (uploadError) throw new Error(`Image upload failed: ${uploadError.message}`);
+
+    const { data } = supabaseClient.storage.from('product-images').getPublicUrl(path);
+    return data.publicUrl;
   }
 
   async function saveProduct() {
     if (!form.name.trim() || !form.price) {
-      alert('Name and price are required');
-      return;
+        alert('Name and price are required');
+        return;
+    }
+    if (!form.categoryId) {
+        alert('Please choose a category');
+        return;
+    }
+    if (imageItems.length === 0) {
+        alert('Add at least one picture');
+        return;
     }
     setSaving(true);
     try {
-      const productId = editingProduct?.id || form.name.toLowerCase().replace(/\s+/g, '-');
-      const payload = {
+        const images: string[] = [];
+        for (const item of imageItems) {
+        if (item.type === 'existing') {
+            images.push(item.url);
+        } else if (item.file) {
+            images.push(await uploadProductImage(item.file));
+        }
+        }
+
+        const slug = form.name.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+        const payload = {
         name: form.name,
+        slug,
         price: Number(form.price),
         description: form.description,
-        category: form.category,
+        category_id: form.categoryId,
         is_customizable: form.isCustomizable,
-      };
+        image_url: images[0], // thumbnail column on `products` — this one IS a real column
+        };
 
-      if (editingProduct) await adminApi.updateProduct(editingProduct.id, payload);
-      else await adminApi.insertProduct({ id: productId, ...payload });
+        let productId = editingProduct?.id;
+        if (editingProduct) {
+        await adminApi.updateProduct(editingProduct.id, payload);
+        } else {
+        const inserted = await adminApi.insertProduct(payload);
+        productId = inserted.id;
+        }
 
-      if (form.isCustomizable && customOptions.length > 0) {
-        await adminApi.saveCustomizationOptions(productId, customOptions);
-      } else {
-        await adminApi.deleteCustomizationOptionsForProduct(productId);
-      }
+        // Gallery lives in product_images, not on the products row itself
+        await adminApi.saveProductImages(productId!, images);
 
-      setShowModal(false);
+        if (form.isCustomizable && customOptions.length > 0) {
+        await adminApi.saveCustomizationOptions(productId!, customOptions);
+        } else {
+        await adminApi.deleteCustomizationOptionsForProduct(productId!);
+        }
+
+        setShowForm(false);
+        setEditingProduct(null);
+        getProductsClient().then(setList);
     } catch (err: any) {
-      alert('Failed to save: ' + err.message);
+        alert('Failed to save: ' + err.message);
     }
     setSaving(false);
-  }
+    }
+
+  if (loading) return <p className="text-sm text-brown-soft">Loading products…</p>;
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="text-2xl font-light">Products ({list.length})</h2>
-        <button
-          onClick={openAddModal}
-          className="bg-black text-white px-6 py-3 rounded-full flex items-center gap-2 hover:bg-gray-800 text-sm"
-        >
-          <Plus size={16} /> Add Product
-        </button>
+      <div className="mb-6 flex items-center justify-between">
+        <h2 className="font-display text-2xl font-medium tracking-[-.02em] text-brown">
+          Products ({list.length})
+        </h2>
+        {!showForm && (
+          <button onClick={openAddForm} className={btnPrimary}>
+            <Plus size={15} /> Add Product
+          </button>
+        )}
       </div>
 
-      <table className="w-full text-sm">
-        <thead>
-          <tr className="text-left text-gray-500 border-b">
-            <th className="py-2">Name</th>
-            <th className="py-2">Category</th>
-            <th className="py-2">Price</th>
-            <th className="py-2">Stock</th>
-            <th className="py-2">Customizable</th>
-            <th className="py-2 text-right">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {list.map((p) => (
-            <tr key={p.id} className="border-b">
-              {editingId === p.id ? (
-                <>
-                  <td className="py-2 pr-2">
-                    <input value={quickForm.name} onChange={(e) => setQuickForm({ ...quickForm, name: e.target.value })} className="border rounded-lg px-2 py-1 w-full" />
-                  </td>
-                  <td className="py-2 pr-2 text-gray-400">{p.category}</td>
-                  <td className="py-2 pr-2">
-                    <input value={quickForm.price} onChange={(e) => setQuickForm({ ...quickForm, price: e.target.value })} className="border rounded-lg px-2 py-1 w-24" />
-                  </td>
-                  <td className="py-2 pr-2">
-                    <input value={quickForm.stock} onChange={(e) => setQuickForm({ ...quickForm, stock: e.target.value })} className="border rounded-lg px-2 py-1 w-20" />
-                  </td>
-                  <td className="py-2 pr-2">{p.customizable ? 'Yes' : 'No'}</td>
-                  <td className="py-2 text-right space-x-2">
-                    <button onClick={() => saveQuickEdit(p.id)} className="bg-black text-white px-3 py-1.5 rounded-lg text-xs">Save</button>
-                    <button onClick={() => setEditingId(null)} className="border px-3 py-1.5 rounded-lg text-xs">Cancel</button>
-                  </td>
-                </>
-              ) : (
-                <>
-                  <td className="py-3">{p.name}</td>
-                  <td className="py-3 text-gray-500">{p.category}</td>
-                  <td className="py-3">EGP {p.price}</td>
-                  <td className="py-3">{p.stock}</td>
-                  <td className="py-3">{p.customizable ? 'Yes' : 'No'}</td>
-                  <td className="py-3 text-right space-x-3">
-                    <button onClick={() => startQuickEdit(p)} className="text-gray-500 hover:text-black"><Edit2 size={14} className="inline" /></button>
-                    <button onClick={() => openEditModal(p)} className="text-blue-600 hover:text-blue-700 text-xs">Full Edit</button>
-                  </td>
-                </>
-              )}
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      {/* Inline add/edit panel */}
+      {showForm && (
+        <div className="mb-10 border border-line bg-paper-light p-6 md:p-8">
+          <div className="mb-6 flex items-start justify-between gap-4">
+            <h3 className="font-display text-xl font-medium tracking-[-.02em] text-brown">
+              {editingProduct ? 'Edit Product' : 'Add Product'}
+            </h3>
+            <button onClick={closeForm} aria-label="Close" className="text-brown-soft transition hover:text-brown">
+              <X size={20} />
+            </button>
+          </div>
 
-      {showModal && (
-        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 px-4">
-          <div className="bg-white rounded-3xl w-full max-w-2xl p-8 relative max-h-[90vh] overflow-y-auto">
-            <button onClick={() => setShowModal(false)} className="absolute top-6 right-6"><X size={22} /></button>
-            <h2 className="text-2xl font-light mb-6">{editingProduct ? 'Edit Product' : 'Add Product'}</h2>
+          <div className="space-y-5">
+            <div>
+              <label className={labelBase}>Pictures</label>
+              <ImageManager
+                items={imageItems}
+                onAdd={addNewImages}
+                onRemove={removeImageItem}
+                onReorder={reorderImages}
+              />
+            </div>
 
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium mb-2">Picture</label>
-                {imagePreview && (
-                  <div className="relative w-32 h-32 mb-2">
-                    <Image src={imagePreview} alt="" fill className="object-cover rounded-xl" />
-                  </div>
-                )}
-                <input type="file" accept="image/*" onChange={(e) => handleImageChange(e.target.files?.[0] || null)} className="border rounded-xl px-4 py-2 w-full text-sm" />
-              </div>
+            <div>
+              <label className={labelBase}>Product name</label>
+              <input
+                type="text"
+                placeholder="Product name *"
+                value={form.name}
+                onChange={(e) => setForm({ ...form, name: e.target.value })}
+                className={inputBase}
+              />
+            </div>
 
-              <input type="text" placeholder="Product name *" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="border rounded-xl px-4 py-3 w-full" />
-              <input type="text" placeholder="Category" value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} className="border rounded-xl px-4 py-3 w-full" />
-              <input type="number" placeholder="Price *" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} className="border rounded-xl px-4 py-3 w-full" />
-              <textarea placeholder="Description" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} className="border rounded-xl px-4 py-3 w-full h-24" />
+            <div>
+              <label className={labelBase}>Category</label>
+              <select
+                value={form.categoryId}
+                onChange={(e) => setForm({ ...form, categoryId: e.target.value })}
+                className={`${inputBase} appearance-none`}
+              >
+                <option value="">Choose a category *</option>
+                {categories.map((c) => (
+                  <option key={c.id} value={c.id}>{c.name}</option>
+                ))}
+              </select>
+            </div>
 
-              <label className="flex items-center gap-3 bg-amber-50 border border-amber-200 p-4 rounded-xl">
-                <input type="checkbox" checked={form.isCustomizable} onChange={(e) => setForm({ ...form, isCustomizable: e.target.checked })} className="w-5 h-5" />
-                <span className="font-medium text-sm">This product is customizable</span>
-              </label>
+            <div>
+              <label className={labelBase}>Price</label>
+              <input
+                type="number"
+                placeholder="Price *"
+                value={form.price}
+                onChange={(e) => setForm({ ...form, price: e.target.value })}
+                className={inputBase}
+              />
+            </div>
 
-              {form.isCustomizable && (
-                <CustomizationEditor options={customOptions} onChange={setCustomOptions} />
-              )}
+            <div>
+              <label className={labelBase}>Description</label>
+              <textarea
+                placeholder="Description"
+                value={form.description}
+                onChange={(e) => setForm({ ...form, description: e.target.value })}
+                className={`${inputBase} h-24 resize-y`}
+              />
+            </div>
 
-              <button onClick={saveProduct} disabled={saving} className="w-full bg-black text-white py-4 rounded-2xl hover:bg-gray-800 disabled:opacity-60">
-                {saving ? 'Saving...' : editingProduct ? 'Update Product' : 'Add Product'}
+            <label className="flex items-center gap-3 border border-line bg-cream p-4">
+              <input
+                type="checkbox"
+                checked={form.isCustomizable}
+                onChange={(e) => setForm({ ...form, isCustomizable: e.target.checked })}
+                className="h-4 w-4 accent-brown"
+              />
+              <span className="text-sm text-brown">This product is customizable</span>
+            </label>
+
+            {form.isCustomizable && (
+              <CustomizationEditor options={customOptions} onChange={setCustomOptions} />
+            )}
+
+            <div className="flex items-center gap-3 pt-2">
+              <button onClick={saveProduct} disabled={saving} className={btnPrimary}>
+                {saving ? 'Saving…' : editingProduct ? 'Update Product' : 'Add Product'}
+              </button>
+              <button onClick={closeForm} className={btnLine}>
+                Cancel
               </button>
             </div>
           </div>
         </div>
       )}
+
+      {/* Product grid */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {list.map((p) => {
+          const isEditing = editingId === p.id;
+          const galleryCount = p.images.length || (p.imageUrl ? 1 : 0);
+          return (
+            <div key={p.id} className="border border-line bg-cream">
+              <div className="relative aspect-[4/3] border-b border-line bg-paper-light">
+                {p.imageUrl ? (
+                  <Image src={p.imageUrl} alt={p.name} fill className="object-cover" />
+                ) : (
+                  <div className="flex h-full w-full flex-col items-center justify-center gap-2 text-gold">
+                    <span className="text-2xl">✦</span>
+                    <span className="text-[9px] uppercase tracking-[.15em] text-brown-soft">No image</span>
+                  </div>
+                )}
+                {galleryCount > 1 && (
+                  <span className="absolute left-2 top-2 bg-brown/85 px-2 py-1 text-[9px] uppercase tracking-[.1em] text-cream">
+                    {galleryCount} photos
+                  </span>
+                )}
+                {p.stock === 0 && (
+                  <span className="absolute right-2 top-2 bg-brown px-2 py-1 text-[9px] uppercase tracking-[.1em] text-cream">
+                    Out of stock
+                  </span>
+                )}
+              </div>
+
+              <div className="p-4">
+                {isEditing ? (
+                  <div className="space-y-2">
+                    <input
+                      value={quickForm.name}
+                      onChange={(e) => setQuickForm({ ...quickForm, name: e.target.value })}
+                      className="w-full border border-line bg-cream px-2 py-1.5 text-sm text-brown outline-none focus:border-gold"
+                      placeholder="Name"
+                    />
+                    <div className="flex gap-2">
+                      <input
+                        value={quickForm.price}
+                        onChange={(e) => setQuickForm({ ...quickForm, price: e.target.value })}
+                        className="w-1/2 border border-line bg-cream px-2 py-1.5 text-sm text-brown outline-none focus:border-gold"
+                        placeholder="Price"
+                      />
+                      <input
+                        value={quickForm.stock}
+                        onChange={(e) => setQuickForm({ ...quickForm, stock: e.target.value })}
+                        className="w-1/2 border border-line bg-cream px-2 py-1.5 text-sm text-brown outline-none focus:border-gold"
+                        placeholder="Stock"
+                      />
+                    </div>
+                    <div className="flex gap-2 pt-1">
+                      <button onClick={() => saveQuickEdit(p.id)} className={`${btnSmallPrimary} flex-1`}>Save</button>
+                      <button onClick={() => setEditingId(null)} className={`${btnSmallLine} flex-1`}>Cancel</button>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <p className="text-[10px] uppercase tracking-[.1em] text-gold">{p.categorySlug}</p>
+                    <h3 className="mt-1 font-display text-lg font-medium tracking-[-.01em] text-brown">
+                      {p.name}
+                    </h3>
+
+                    <div className="mt-2 flex items-center justify-between text-sm">
+                      <span className="text-brown">EGP {p.price}</span>
+                      <span className={p.stock === 0 ? 'text-[#a14b3c]' : 'text-brown-soft'}>
+                        {p.stock} in stock
+                      </span>
+                    </div>
+
+                    {p.customizable && (
+                      <span className="mt-2 inline-block border border-gold px-2 py-0.5 text-[9px] uppercase tracking-[.08em] text-gold">
+                        Customizable
+                      </span>
+                    )}
+
+                    <div className="mt-4 flex items-center justify-between border-t border-line pt-3">
+                      <button
+                        onClick={() => startQuickEdit(p)}
+                        className="flex items-center gap-1.5 text-[11px] uppercase tracking-[.06em] text-brown-soft transition hover:text-brown"
+                      >
+                        <Edit2 size={12} /> Quick edit
+                      </button>
+                      <button
+                        onClick={() => openEditForm(p)}
+                        className="text-[11px] uppercase tracking-[.06em] text-gold transition hover:text-brown"
+                      >
+                        Full Edit
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+          );
+        })}
+
+        {list.length === 0 && (
+          <p className="col-span-full py-10 text-center text-sm text-brown-soft">No products yet.</p>
+        )}
+      </div>
     </div>
   );
 }

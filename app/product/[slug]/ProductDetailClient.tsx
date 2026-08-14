@@ -5,6 +5,8 @@ import Link from 'next/link';
 import { ArrowRight, Heart, ShoppingBag } from 'lucide-react';
 import ProductCard from '../../components/ProductCard';
 import type { Product } from '../../../lib/products';
+import { useRouter } from 'next/navigation';
+import { addToCart, addToWishlist } from '../../../lib/localCart';
 
 export default function ProductDetailClient({
   product,
@@ -16,14 +18,25 @@ export default function ProductDetailClient({
   const [customSelections, setCustomSelections] = useState<Selections>({});
   const [customComplete, setCustomComplete] = useState(!product.customizable);
 
+  const gallery = product.images.length > 0 ? product.images : product.imageUrl ? [product.imageUrl] : [];
+  const [activeImage, setActiveImage] = useState(0);
+  const currentImage = gallery[activeImage] ?? null;
+
   const addDisabled = product.customizable && !customComplete;
+  const outOfStock = product.stock <= 0;
+
+  // inside the component:
+  const router = useRouter();
 
   function handleAddToCart() {
-    if (addDisabled) return;
-    // TODO: once cart state is lifted out of local mock arrays, pass
-    // customSelections through as line-item metadata, e.g.:
-    //   addToCart({ id: product.id, qty: 1, customization: customSelections })
-    console.log('Add to cart', { productId: product.id, customSelections });
+    if (addDisabled || outOfStock) return;
+    addToCart(product.id, 1, customSelections);
+    router.push('/cart');
+  }
+
+  function handleSave() {
+    addToWishlist(product.id);
+    router.push('/wishlist');
   }
 
   return (
@@ -36,42 +49,80 @@ export default function ProductDetailClient({
         <span className="text-brown">{product.name}</span>
       </nav>
 
-      <div className="mx-auto grid max-w-[1240px] grid-cols-1 items-start gap-[34px] px-5 pb-20 pt-5 md:grid-cols-2 md:gap-[70px] md:px-[30px] md:pb-[110px] md:pt-[30px]">
-        <div className="sticky top-[110px] flex aspect-[.9] items-center justify-center border border-line bg-paper-light text-gold">
-          <span className="relative z-10 text-[40px]">✦</span>
+      <div className="mx-auto grid max-w-[1240px] grid-cols-1 items-start gap-[34px] px-5 pb-20 pt-5 md:grid-cols-[1.15fr_0.85fr] md:gap-[90px] md:px-[30px] md:pb-[110px] md:pt-[30px]">
+        <div className="sticky top-[110px]">
+          <div className="flex aspect-[.9] items-center justify-center overflow-hidden border border-line bg-paper-light text-gold">
+            {currentImage ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={currentImage} alt={product.name} className="h-full w-full object-cover" />
+            ) : (
+              <span className="relative z-10 text-[40px]">✦</span>
+            )}
+          </div>
+
+          {gallery.length > 1 && (
+            <div className="mt-3 grid grid-cols-5 gap-2">
+              {gallery.map((url, i) => (
+                <button
+                  key={url + i}
+                  onClick={() => setActiveImage(i)}
+                  aria-label={`Show picture ${i + 1} of ${gallery.length}`}
+                  aria-current={i === activeImage}
+                  className={`relative aspect-square overflow-hidden border bg-paper-light transition ${
+                    i === activeImage ? 'border-brown' : 'border-line hover:border-gold'
+                  }`}
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={url} alt="" className="h-full w-full object-cover" />
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
         <div>
-          <p className="mb-3 text-[10px] font-semibold uppercase tracking-[.22em] text-gold">{product.tag}</p>
-          <h1 className="mb-[14px] font-display text-[clamp(34px,4vw,48px)] font-medium leading-none tracking-[-.035em]">{product.name}</h1>
+          <p className="mb-3 text-[10px] font-semibold uppercase tracking-[.22em] text-gold">
+            {product.categoryName}
+          </p>
+          <h1 className="mb-[14px] font-display text-[clamp(34px,4vw,48px)] font-medium leading-none tracking-[-.035em]">
+            {product.name}
+          </h1>
           <p className="mb-[26px] font-display text-[22px] text-brown-soft">{product.priceLabel}</p>
-          <p className="mb-[30px] max-w-[460px] text-[14.5px] leading-[1.85] text-brown-soft">{product.description}</p>
+          <p className="mb-[30px] max-w-[460px] text-[14.5px] leading-[1.85] text-brown-soft">
+            {product.description}
+          </p>
 
-          <blockquote className="mb-[34px] border-l-2 border-gold pl-[18px] font-display text-[17px] italic">
-            "{product.verse}"
-            <span className="mt-[6px] block font-sans text-[9px] not-italic uppercase tracking-[.16em] text-gold">{product.verseRef}</span>
-          </blockquote>
+          {outOfStock && (
+            <p className="mb-6 border border-line bg-paper-light px-4 py-2 text-[12px] uppercase tracking-[.06em] text-brown-soft">
+              Currently out of stock
+            </p>
+          )}
 
           {product.customizable && (
-            <ProductCustomizer
-              productId={product.id}
-              productName={product.name}
-              onChange={(selections, complete) => {
-                setCustomSelections(selections);
-                setCustomComplete(complete);
-              }}
-            />
-          )}
+        <div className="mx-auto max-w-[1240px] px-5 md:px-[30px]">
+          <ProductCustomizer
+            productId={product.id}
+            productName={product.name}
+            onChange={(selections, complete) => {
+              setCustomSelections(selections);
+              setCustomComplete(complete);
+            }}
+          />
+        </div>
+      )}
 
           <div className="mb-9 flex gap-[14px]">
             <button
               onClick={handleAddToCart}
-              disabled={addDisabled}
+              disabled={addDisabled || outOfStock}
               className="inline-flex min-h-[46px] items-center justify-center gap-[10px] border border-transparent bg-brown px-5 text-[11px] uppercase tracking-[.08em] text-cream transition duration-200 hover:-translate-y-0.5 hover:shadow-[0_8px_24px_rgba(76,60,46,.16)] disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:translate-y-0 disabled:hover:shadow-none"
             >
               Add to cart <ShoppingBag size={16} />
             </button>
-            <button className="inline-flex min-h-[46px] items-center justify-center gap-[10px] border border-brown bg-transparent px-5 text-[11px] uppercase tracking-[.08em] text-brown transition duration-200 hover:bg-brown hover:text-cream">
+            <button
+              onClick={handleSave}
+              className="inline-flex min-h-[46px] items-center justify-center gap-[10px] border border-brown bg-transparent px-5 text-[11px] uppercase tracking-[.08em] text-brown transition duration-200 hover:bg-brown hover:text-cream"
+            >
               Save <Heart size={16} />
             </button>
           </div>
@@ -81,17 +132,6 @@ export default function ProductDetailClient({
               Choose the required options above before adding this piece to your cart.
             </p>
           )}
-
-          <div className="border-t border-line pt-6">
-            <h3 className="mb-[14px] text-[11px] font-semibold uppercase tracking-[.12em] text-brown-soft">Details</h3>
-            <ul className="m-0 flex list-none flex-col gap-[10px] p-0">
-              {product.details.map((detail) => (
-                <li key={detail} className="relative pl-4 text-[13.5px] text-brown-soft before:absolute before:left-0 before:top-1 before:text-[9px] before:text-gold before:content-['✦']">
-                  {detail}
-                </li>
-              ))}
-            </ul>
-          </div>
         </div>
       </div>
 

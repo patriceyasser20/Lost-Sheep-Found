@@ -1,42 +1,142 @@
+import type { PromoCode, Offer } from './adminTypes';
+
 const ADMIN_ENDPOINT = '/api/admin-ops';
 
 function getToken() {
   return typeof window === 'undefined' ? null : localStorage.getItem('adminToken');
 }
 
-async function call(action: string, payload: any) {
+function mapPromoCode(row: any): PromoCode {
+  return {
+    id: row.id,
+    code: row.code,
+    discountPct: row.discount_pct,
+    usageLimit: row.usage_limit,
+    usedCount: row.used_count,
+    expiresAt: row.expires_at || '',
+    active: row.active,
+    freeDelivery: row.free_delivery ?? false,
+  };
+}
+
+function mapOffer(row: any): Offer {
+  return {
+    id: row.id,
+    title: row.title,
+    offerType: row.offer_type,
+    buyQty: row.buy_qty,
+    getQty: row.get_qty,
+    discountPct: row.discount_pct,
+    appliesTo: row.applies_to,
+    targetId: row.target_id || '',
+    targetLabel: row.target_label || '',
+    requireSameVariant: row.require_same_variant,
+    endsAt: row.ends_at || '',
+    active: row.active,
+  };
+}
+
+async function call(action: string, payload: any = {}) {
   const res = await fetch(ADMIN_ENDPOINT, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'x-admin-token': getToken() || '' },
     body: JSON.stringify({ action, payload }),
   });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error || `Request failed: ${action}`);
-  return data.data ?? data;
+
+  const text = await res.text();
+  let json: any;
+  try {
+    json = JSON.parse(text);
+  } catch {
+    throw new Error(`Server error (${res.status}): ${text.slice(0, 200)}`);
+  }
+
+  if (!res.ok) throw new Error(json.error || `Request failed: ${action}`);
+  return json.data ?? json;
 }
 
 export const adminApi = {
+  // products
   insertProduct: (payload: any) => call('insert-product', payload),
   updateProduct: (id: string, payload: any) => call('update-product', { id, ...payload }),
   deleteProduct: (id: string) => call('delete-product', { id }),
+  clearCollection: (collection: string) => call('clear-collection', { collection }),
 
-  insertPromo: (payload: unknown) => call('insert-promo', payload),
-  updatePromo: (payload: unknown) => call('update-promo', payload),
+  // variants
+  insertVariants: (rows: any[]) => call('insert-variants', rows),
+  updateVariantDiscount: (id: string, payload: any) => call('update-variant-discount', { id, ...payload }),
+  restock: (variantId: string, stock: number) => call('restock', { variantId, stock }),
+
+  // promo codes
+  async getPromoCodes() {
+    const data = await call('get-promo-codes');
+    return (data || []).map(mapPromoCode);
+  },
+  async insertPromo(payload: Omit<PromoCode, 'id' | 'usedCount'>) {
+    const data = await call('insert-promo', payload);
+    return mapPromoCode(data);
+  },
+  async updatePromo(payload: PromoCode) {
+    const data = await call('update-promo', payload); // payload must include id
+    return mapPromoCode(data);
+  },
   deletePromo: (id: string) => call('delete-promo', { id }),
 
-  upsertShippingCity: (payload: unknown) => call('upsert-shipping-city', payload),
+  // shipping
+  toggleCountry: (code: string, enabled: boolean) => call('toggle-country', { code, enabled }),
+  upsertShippingCity: (payload: any) => call('upsert-shipping-city', payload),
+  getShippingCities: (countryCode: string) => call('get-shipping-cities', { countryCode }),
 
-  insertOffer: (payload: unknown) => call('insert-offer', payload),
-  updateOffer: (payload: unknown) => call('update-offer', payload),
+  // featured / home page
+  getFeatured: async (section: string) => {
+    // read-only, so this can go straight through supabaseClient instead of admin-ops
+    const { supabaseClient } = await import('./supabaseClient');
+    const { data, error } = await supabaseClient
+      .from('featured_products')
+      .select('product_id')
+      .eq('section', section)
+      .order('position');
+    if (error) throw new Error(error.message);
+    return (data || []).map((r: any) => r.product_id as string);
+  },
+  setFeatured: (productId: string, section: string, position: number) =>
+    call('set-featured', { product_id: productId, section, position }),
+  unsetFeatured: (productId: string, section: string) => call('unset-featured', { productId, section }),
+  clearFeatured: (section: string) => call('clear-featured', { section }),
+
+  // offers
+  async getOffers() {
+    const data = await call('get-offers');
+    return (data || []).map(mapOffer);
+  },
+  async insertOffer(payload: Omit<Offer, 'id'>) {
+    const data = await call('insert-offer', payload);
+    return mapOffer(data);
+  },
+  async updateOffer(payload: Offer) {
+    const data = await call('update-offer', payload); // payload must include id
+    return mapOffer(data);
+  },
   deleteOffer: (id: string) => call('delete-offer', { id }),
 
-  insertSku: (payload: unknown) => call('insert-sku', payload),
-  updateSku: (payload: unknown) => call('update-sku', payload),
-  deleteSku: (id: string) => call('delete-sku', { id }),
-
-  updateOrderStatus: (payload: unknown) => call('update-order-status', payload),
+  // customization options — matches your live schema (options: string[])
   saveCustomizationOptions: (productId: string, options: any[]) =>
-  call('insert-customization-options', { productId, options }),
+    call('save-customization-options', { productId, options }),
+  saveProductImages: (productId: string, images: string[]) =>
+    call('save-product-images', { productId, images }),
   deleteCustomizationOptionsForProduct: (productId: string) =>
-  call('delete-customization-options-for-product', { productId }),
+    call('delete-customization-options', { productId }),
+
+  // skus (mapped onto the product_variants table)
+  insertSku: (payload: any) => call('insert-sku', payload),
+  updateSku: (payload: any) => call('update-sku', payload),
+  deleteSku: (id: string) => call('delete-sku', { id }),
+  getSkus: () => call('get-skus'),
+
+  // orders
+  updateOrderStatus: (payload: { id: string; status: string }) => call('update-order-status', payload),
+
+  // newsletter
+  getSubscribers: () => call('get-subscribers'),
+  sendNewsletter: (payload: any) => call('send-newsletter', payload), // add a handler + email provider when ready
 };

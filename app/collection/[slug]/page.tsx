@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-// import { getByCollection } from '../../../lib/products';
+import { getProductsByCategory } from '../../../lib/productsServer';
 import CollectionPageClient from './CollectionPageClient';
 
 const COLLECTION_NAMES: Record<string, string> = {

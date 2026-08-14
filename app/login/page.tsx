@@ -48,8 +48,10 @@ export default function LoginPage() {
       return;
     }
 
-    if (data.session) await checkAndSetAdmin(data.session.access_token);
-    router.push('/account');
+    let isAdmin = false;
+    if (data.session) isAdmin = await checkAndSetAdmin(data.session.access_token);
+
+    router.push(isAdmin ? '/admin' : '/account');
   }
 
   return (

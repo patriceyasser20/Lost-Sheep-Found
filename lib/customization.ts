@@ -5,8 +5,8 @@ export type OptionType = 'select' | 'text' | 'textarea';
 export type OptionChoice = {
   id: string;
   label: string;
-  swatch?: string;   // hex color, for Cover/Colors
-  image?: string;     // small preview image, for Designs/Template
+  swatch?: string;
+  image?: string; 
 };
 
 export type CustomizationOption = {
@@ -16,65 +16,82 @@ export type CustomizationOption = {
   type: OptionType;
   required: boolean;
   options: OptionChoice[];
+  sort_order: number;
   placeholder?: string;
 };
 
-// Presets the admin can drop in with one click.
-export const OPTION_PRESETS: Record<string, Omit<CustomizationOption, 'id' | 'product_id'>> = {
+const COLOR_SWATCHES: Record<string, string> = {
+  ivory: '#f3ede0',
+  'sage green': '#9caf88',
+  'dusty rose': '#c98f8f',
+  cream: '#fffdf8',
+  navy: '#1c2a4a',
+  gold: '#a1792f',
+  'kraft cover': '#b08d57',
+  'linen cover': '#e7dcc4',
+  'leather cover': '#5c3a21',
+};
+
+export function swatchFor(label: string): string | undefined {
+  return COLOR_SWATCHES[label.trim().toLowerCase()];
+}
+
+export const OPTION_PRESETS: Record<string, Omit<CustomizationOption, 'id' | 'product_id' | 'sort_order'>> = {
   Cover: {
-    name: 'Cover', type: 'select', required: true,
+    name: 'Cover',
+    type: 'select',
+    required: true,
     options: [
-      { id: 'cover-linen-ivory', label: 'Linen — Ivory', swatch: '#ede1c6' },
-      { id: 'cover-linen-navy', label: 'Linen — Navy', swatch: '#1c2a4a' },
-      { id: 'cover-leather-cognac', label: 'Leather — Cognac', swatch: '#8a5a34' },
+      { id: 'cover-linen', label: 'Linen Cover', swatch: swatchFor('linen cover') },
+      { id: 'cover-kraft', label: 'Kraft Cover', swatch: swatchFor('kraft cover') },
+      { id: 'cover-leather', label: 'Leather Cover', swatch: swatchFor('leather cover') },
     ],
   },
   Colors: {
-    name: 'Colors', type: 'select', required: true,
+    name: 'Color',
+    type: 'select',
+    required: true,
     options: [
-      { id: 'color-gold', label: 'Gold Foil', swatch: '#a1792f' },
-      { id: 'color-silver', label: 'Silver Foil', swatch: '#b7bcc4' },
-      { id: 'color-rubric', label: 'Rubric Red', swatch: '#7b2c2c' },
+      { id: 'color-ivory', label: 'Ivory', swatch: swatchFor('ivory') },
+      { id: 'color-sage', label: 'Sage Green', swatch: swatchFor('sage green') },
+      { id: 'color-rose', label: 'Dusty Rose', swatch: swatchFor('dusty rose') },
+      { id: 'color-navy', label: 'Navy', swatch: swatchFor('navy') },
     ],
   },
   Designs: {
-    name: 'Designs', type: 'select', required: false,
+    name: 'Design',
+    type: 'select',
+    required: false,
     options: [
-      { id: 'design-ivy', label: 'Ivy Border' },
-      { id: 'design-cross', label: 'Cross Emblem' },
-      { id: 'design-vine', label: 'Floral Vine' },
-      { id: 'design-none', label: 'No Design' },
+      { id: 'design-plain', label: 'Plain' },
+      { id: 'design-floral', label: 'Floral Border' },
+      { id: 'design-verse', label: 'Verse Overlay' },
     ],
   },
   Template: {
-    name: 'Template', type: 'select', required: true,
+    name: 'Template',
+    type: 'select',
+    required: false,
     options: [
-      { id: 'tpl-classic', label: 'Classic Verse Layout' },
-      { id: 'tpl-minimal', label: 'Modern Minimal' },
-      { id: 'tpl-illuminated', label: 'Illuminated Initial' },
+      { id: 'template-classic', label: 'Classic' },
+      { id: 'template-modern', label: 'Modern' },
     ],
   },
   Prompt: {
-    name: 'Personal Verse or Prompt', type: 'textarea', required: false, options: [],
-    placeholder: 'e.g. "Psalm 46:10", a name to stamp inside the cover, or a note for the scribe...',
+    name: 'Personalization',
+    type: 'textarea',
+    required: false,
+    options: [],
   },
 };
 
-// Local fallback so the storefront renders before Supabase is connected.
-const DEMO_CUSTOMIZATION: Record<string, Omit<CustomizationOption, 'product_id'>[]> = {
-  'the-shepherd-journal': [
-    { id: 'opt-cover', ...OPTION_PRESETS.Cover },
-    { id: 'opt-colors', ...OPTION_PRESETS.Colors },
-    { id: 'opt-designs', ...OPTION_PRESETS.Designs },
-    { id: 'opt-template', ...OPTION_PRESETS.Template },
-    { id: 'opt-prompt', ...OPTION_PRESETS.Prompt },
-  ],
-};
-
-export async function getCustomizationOptions(productId: string): Promise<CustomizationOption[]> {
-  // TODO: once Supabase is connected —
-  //   const { data } = await supabaseClient.from('customization_options').select('*').eq('product_id', productId);
-  //   return data || [];
-  const demo = DEMO_CUSTOMIZATION[productId];
-  return demo ? demo.map((o) => ({ ...o, product_id: productId })) : [];
+// Client Component read (product customizer widget, admin edit modal)
+export async function getCustomizationOptionsClient(productId: string): Promise<CustomizationOption[]> {
+  const { data, error } = await supabaseClient
+    .from('customization_options')
+    .select('*')
+    .eq('product_id', productId)
+    .order('sort_order', { ascending: true });
+  if (error) { console.error('getCustomizationOptionsClient:', error.message); return []; }
+  return data || [];
 }
