@@ -1,6 +1,7 @@
 'use client';
 
 import ProductCard from '../../components/ProductCard';
+import VerseBlock from '../../components/VerseBlock';
 import type { Product } from '../../../lib/products';
 
 export default function CollectionPageClient({
@@ -18,10 +19,17 @@ export default function CollectionPageClient({
       </section>
 
       <div className="mx-auto max-w-[1240px] px-[30px]">
-        <div className="grid grid-cols-1 gap-[18px] pb-[110px] md:grid-cols-3">
+        <div className="grid grid-cols-1 gap-[18px] md:grid-cols-3">
           {products.map((product) => (
             <ProductCard product={product} key={product.slug} />
           ))}
+        </div>
+
+        <div className="pb-[110px]">
+          <VerseBlock
+            verse="Whatever is true, whatever is noble, whatever is right, whatever is lovely — think about such things."
+            reference="Philippians 4:8"
+          />
         </div>
       </div>
     </main>

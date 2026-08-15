@@ -212,6 +212,31 @@ const handlers: Record<string, (payload: any) => Promise<any>> = {
   'get-offers': async () =>
   unwrap(db.from('offers').select('*').order('created_at', { ascending: false })),
 
+  'get-orders': async () =>
+    unwrap(
+      db
+        .from('orders')
+        .select(`
+          id,
+          created_at,
+          status,
+          subtotal,
+          delivery_fee,
+          discount,
+          total,
+          city,
+          user_id,
+          shipping_address,
+          order_items (
+            quantity,
+            unit_price,
+            customization,
+            products ( name, image_url )
+          )
+        `)
+        .order('created_at', { ascending: false })
+    ),
+
 
 };
 

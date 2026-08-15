@@ -4,6 +4,7 @@ import ProductCustomizer, { type Selections } from '../../components/ProductCust
 import Link from 'next/link';
 import { ArrowRight, Heart, ShoppingBag } from 'lucide-react';
 import ProductCard from '../../components/ProductCard';
+import VerseBlock from '../../components/VerseBlock';
 import type { Product } from '../../../lib/products';
 import { useRouter } from 'next/navigation';
 import { addToCart, addToWishlist } from '../../../lib/localCart';
@@ -25,7 +26,6 @@ export default function ProductDetailClient({
   const addDisabled = product.customizable && !customComplete;
   const outOfStock = product.stock <= 0;
 
-  // inside the component:
   const router = useRouter();
 
   function handleAddToCart() {
@@ -99,17 +99,17 @@ export default function ProductDetailClient({
           )}
 
           {product.customizable && (
-        <div className="mx-auto max-w-[1240px] px-5 md:px-[30px]">
-          <ProductCustomizer
-            productId={product.id}
-            productName={product.name}
-            onChange={(selections, complete) => {
-              setCustomSelections(selections);
-              setCustomComplete(complete);
-            }}
-          />
-        </div>
-      )}
+            <div className="mx-auto max-w-[1240px] px-5 md:px-[30px]">
+              <ProductCustomizer
+                productId={product.id}
+                productName={product.name}
+                onChange={(selections, complete) => {
+                  setCustomSelections(selections);
+                  setCustomComplete(complete);
+                }}
+              />
+            </div>
+          )}
 
           <div className="mb-9 flex gap-[14px]">
             <button
@@ -132,6 +132,11 @@ export default function ProductDetailClient({
               Choose the required options above before adding this piece to your cart.
             </p>
           )}
+
+          <VerseBlock
+            verse="Your word is a lamp for my feet, a light on my path."
+            reference="Psalm 119:105"
+          />
         </div>
       </div>
 

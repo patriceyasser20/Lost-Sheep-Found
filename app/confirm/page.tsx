@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { supabaseClient } from '../../lib/supabaseClient';
+import VerseBlock from '../components/VerseBlock';
 
 export default function ConfirmPage() {
   const [status, setStatus] = useState<'checking' | 'confirmed' | 'error'>('checking');
@@ -14,7 +15,7 @@ export default function ConfirmPage() {
   }, []);
 
   return (
-    <main className="mx-auto max-w-[420px] px-[30px] pt-[120px] text-center">
+    <main className="mx-auto max-w-[420px] px-[30px] pt-[120px] pb-[80px] text-center">
       <div className="mb-[18px] text-[22px] text-[#c2a97e]">✦</div>
       {status === 'checking' && <h2 className="font-display text-3xl font-medium">Confirming your email…</h2>}
       {status === 'confirmed' && (
@@ -30,6 +31,13 @@ export default function ConfirmPage() {
           <p className="mt-[14px] text-brown-soft">The link may have expired. Try signing in — we'll send a fresh one if needed.</p>
           <Link href="/login" className="mt-[10px] inline-flex min-h-[46px] items-center justify-center gap-[10px] border border-transparent bg-brown px-5 text-[11px] uppercase tracking-[.08em] text-cream transition duration-200 hover:-translate-y-0.5 hover:shadow-[0_8px_24px_rgba(76,60,46,.16)]">Go to sign in</Link>
         </>
+      )}
+
+      {status !== 'checking' && (
+        <VerseBlock
+          verse="I have called you by name, you are mine."
+          reference="Isaiah 43:1"
+        />
       )}
     </main>
   );

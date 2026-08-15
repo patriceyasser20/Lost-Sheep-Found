@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import VerseBlock from '../components/VerseBlock';
 
 export const metadata = {
   title: 'About — Lost Sheep Found',
@@ -19,6 +20,10 @@ export default function AboutPage() {
         list of verses we keep coming back to.
       </p>
       <Link href="/our-story" className="text-xs uppercase tracking-[.08em] border-b border-gold pb-[5px]">Read our full story <span className="ml-[7px]">→</span></Link>
+      <VerseBlock
+        verse="Whatever you do, work at it with all your heart, as working for the Lord."
+        reference="Colossians 3:23"
+      />
     </main>
   );
 }

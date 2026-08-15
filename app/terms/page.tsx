@@ -1,3 +1,4 @@
+import VerseBlock from '../components/VerseBlock';
 export const metadata = {
   title: "Terms of Service — Lost Sheep Found",
 };
@@ -69,6 +70,10 @@ export default function TermsPage() {
           hello@lostsheepfound.com.
         </p>
       </div>
+      <VerseBlock
+          verse="In the world you will have tribulation. But take heart; I have overcome the world."
+          reference="John 16:33"
+      />
     </main>
   );
 }

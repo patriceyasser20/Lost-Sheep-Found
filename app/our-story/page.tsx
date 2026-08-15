@@ -89,14 +89,14 @@ export default function OurStoryPage() {
           );
         })}
       </section>
-
       <section className="bg-paper-light px-[30px] py-[110px] text-center">
         <div className="text-xl text-gold">✦</div>
         <blockquote className="mx-auto mb-2 mt-[18px] max-w-[850px] font-display text-[clamp(34px,5vw,58px)] italic tracking-[-.04em]">
-          "I have found my sheep which was lost."
+          "Be still, and know that I am God."
         </blockquote>
-        <p className="m-0 text-[9px] uppercase tracking-[.2em] text-gold">Luke 15:6</p>
+        <p className="m-0 text-[9px] uppercase tracking-[.2em] text-gold">Psalm 46:10</p>
       </section>
+      
     </main>
   );
 }

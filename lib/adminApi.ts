@@ -1,6 +1,7 @@
-import type { PromoCode, Offer } from './adminTypes';
+import type { PromoCode, Offer, AdminOrder, AdminOrderItem, OrderStatus } from './adminTypes';
 
 const ADMIN_ENDPOINT = '/api/admin-ops';
+
 
 function getToken() {
   return typeof window === 'undefined' ? null : localStorage.getItem('adminToken');
@@ -16,6 +17,38 @@ function mapPromoCode(row: any): PromoCode {
     expiresAt: row.expires_at || '',
     active: row.active,
     freeDelivery: row.free_delivery ?? false,
+  };
+}
+
+function mapOrder(row: any): AdminOrder {
+  const addr = row.shipping_address || {};
+  const customerName = [addr.firstName, addr.lastName].filter(Boolean).join(' ').trim() || 'Guest';
+
+  const items: AdminOrderItem[] = (row.order_items || []).map((it: any) => ({
+    productName: it.products?.name || 'Product',
+    imageUrl: it.products?.image_url || null,
+    quantity: it.quantity,
+    unitPrice: Number(it.unit_price) || 0,
+    customization: it.customization && typeof it.customization === 'object' ? it.customization : null,
+  }));
+
+  return {
+    id: row.id,
+    customerName,
+    email: addr.email || '—',
+    city: row.city || '—',
+    isRegistered: Boolean(row.user_id),   // ← the actual signal, not name presence
+    items,
+    subtotal: Number(row.subtotal) || 0,
+    deliveryFee: Number(row.delivery_fee) || 0,
+    discount: Number(row.discount) || 0,
+    total: Number(row.total) || 0,
+    createdAt: row.created_at
+      ? new Date(row.created_at).toLocaleString('en-US', {
+          month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: 'numeric', hour12: true,
+        })
+      : '—',
+    status: (row.status as OrderStatus) ?? 'pending',
   };
 }
 
@@ -55,7 +88,7 @@ async function call(action: string, payload: any = {}) {
   return json.data ?? json;
 }
 
-export const adminApi = {
+  export const adminApi = {
   // products
   insertProduct: (payload: any) => call('insert-product', payload),
   updateProduct: (id: string, payload: any) => call('update-product', { id, ...payload }),
@@ -77,7 +110,7 @@ export const adminApi = {
     return mapPromoCode(data);
   },
   async updatePromo(payload: PromoCode) {
-    const data = await call('update-promo', payload); // payload must include id
+    const data = await call('update-promo', payload);
     return mapPromoCode(data);
   },
   deletePromo: (id: string) => call('delete-promo', { id }),
@@ -89,7 +122,6 @@ export const adminApi = {
 
   // featured / home page
   getFeatured: async (section: string) => {
-    // read-only, so this can go straight through supabaseClient instead of admin-ops
     const { supabaseClient } = await import('./supabaseClient');
     const { data, error } = await supabaseClient
       .from('featured_products')
@@ -114,12 +146,12 @@ export const adminApi = {
     return mapOffer(data);
   },
   async updateOffer(payload: Offer) {
-    const data = await call('update-offer', payload); // payload must include id
+    const data = await call('update-offer', payload);
     return mapOffer(data);
   },
   deleteOffer: (id: string) => call('delete-offer', { id }),
 
-  // customization options — matches your live schema (options: string[])
+  // customization options
   saveCustomizationOptions: (productId: string, options: any[]) =>
     call('save-customization-options', { productId, options }),
   saveProductImages: (productId: string, images: string[]) =>
@@ -127,16 +159,20 @@ export const adminApi = {
   deleteCustomizationOptionsForProduct: (productId: string) =>
     call('delete-customization-options', { productId }),
 
-  // skus (mapped onto the product_variants table)
+  // skus
   insertSku: (payload: any) => call('insert-sku', payload),
   updateSku: (payload: any) => call('update-sku', payload),
   deleteSku: (id: string) => call('delete-sku', { id }),
   getSkus: () => call('get-skus'),
 
   // orders
+  async getOrders() {
+    const data = await call('get-orders');
+    return (data || []).map(mapOrder);
+  },
   updateOrderStatus: (payload: { id: string; status: string }) => call('update-order-status', payload),
 
   // newsletter
   getSubscribers: () => call('get-subscribers'),
-  sendNewsletter: (payload: any) => call('send-newsletter', payload), // add a handler + email provider when ready
+  sendNewsletter: (payload: any) => call('send-newsletter', payload),
 };

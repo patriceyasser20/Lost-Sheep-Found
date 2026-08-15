@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { supabaseClient } from '../../lib/supabaseClient';
+import VerseBlock from '../components/VerseBlock';
 
 export default function SignupPage() {
   const [firstName, setFirstName] = useState('');
@@ -18,8 +19,6 @@ export default function SignupPage() {
     setLoading(true);
     setError('');
 
-    // Check for an existing account first so we don't silently re-send a
-    // confirmation to someone who already registered.
     const existsRes = await fetch('/api/check-existing', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -55,12 +54,17 @@ export default function SignupPage() {
         <div className="mb-[18px] text-[22px] text-[#c2a97e]">✦</div>
         <h2 className="mt-[30px] mb-4 font-display text-[clamp(30px,3.6vw,38px)] font-medium tracking-[-.03em]">Check your inbox</h2>
         <p className="mb-[18px] text-[14.5px] leading-[1.85] text-brown-soft">We've sent a confirmation link to {email}.</p>
+
+        <VerseBlock
+          verse="The Lord bless you and keep you."
+          reference="Numbers 6:24"
+        />
       </main>
     );
   }
 
   return (
-    <main className="mx-auto max-w-[420px] px-[30px] pt-[100px]">
+    <main className="mx-auto max-w-[420px] px-[30px] pb-[80px] pt-[100px]">
       <p className="mb-[6px] text-center text-[10px] uppercase tracking-[.16em] text-gold">Join us</p>
       <h2 className="mt-[30px] mb-4 text-center font-display text-[clamp(30px,3.6vw,38px)] font-medium tracking-[-.03em]">Create an account</h2>
 
@@ -93,9 +97,13 @@ export default function SignupPage() {
         </button>
       </form>
 
-      <p className="mt-[18px] text-center text-xs text-brown-soft">
+      <p className="mt-[18px] text-center py-5 text-xs text-brown-soft">
         Already have an account? <Link href="/login" className="text-xs uppercase tracking-[.08em] border-b border-gold pb-[5px]">Sign in</Link>
       </p>
+      <VerseBlock
+          verse="In all things God works for the good of those who love him."
+          reference="Romans 8:28"
+        />
     </main>
   );
 }

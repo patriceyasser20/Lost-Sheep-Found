@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { HelpCircle, Mail, Ruler, RotateCcw, Truck } from 'lucide-react';
+import VerseBlock from '../components/VerseBlock';
 
 export const metadata = {
   title: 'Customer Service — Lost Sheep Found',
@@ -41,6 +42,11 @@ export default function CustomerServicePage() {
             );
           })}
         </div>
+
+        <VerseBlock
+          verse="Carry each other's burdens, and in this way you will fulfill the law of Christ."
+          reference="Galatians 6:2"
+        />
       </div>
     </main>
   );

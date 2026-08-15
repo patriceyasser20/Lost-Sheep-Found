@@ -48,15 +48,29 @@ export const mockSkus: Sku[] = [];
 
 export type OrderStatus = 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
 
+export type AdminOrderItem = {
+  productName: string;
+  imageUrl: string | null;
+  quantity: number;
+  unitPrice: number;
+  customization: Record<string, any> | null;
+};
+
 export type AdminOrder = {
   id: string;
   customerName: string;
   email: string;
-  itemsSummary: string;
+  city: string;
+  isRegistered: boolean; 
+  items: AdminOrderItem[];
+  subtotal: number;
+  deliveryFee: number;
+  discount: number;
   total: number;
   createdAt: string;
   status: OrderStatus;
 };
+
 export const mockOrders: AdminOrder[] = [];
 export type ShippingRate = {
   id: string;

@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { ArrowRight } from 'lucide-react';
 import ProductCard from '../components/ProductCard';
+import VerseBlock from '../components/VerseBlock';
 import type { Product } from '../../lib/products';
 
 const categories = [
@@ -18,7 +19,6 @@ export default function ShopPageClient({ initialProducts }: { initialProducts: P
   const activeCategory = searchParams.get('category') ?? '';
   const customizableOnly = searchParams.get('customizable') === 'true';
 
-  // app/shop/ShopPageClient.tsx — only the filter logic changes
   const list = initialProducts.filter((p) => {
     if (activeCategory && p.categorySlug !== activeCategory) return false;
     if (customizableOnly && !p.customizable) return false;
@@ -61,11 +61,19 @@ export default function ShopPageClient({ initialProducts }: { initialProducts: P
             </Link>
           </div>
         ) : (
-          <div className="grid grid-cols-1 gap-[18px] pb-[110px] md:grid-cols-3">
-            {list.map((product) => (
-              <ProductCard product={product} key={product.id} />
-            ))}
-          </div>
+          <>
+            <div className="grid grid-cols-1 gap-[18px] md:grid-cols-3">
+              {list.map((product) => (
+                <ProductCard product={product} key={product.id} />
+              ))}
+            </div>
+            <div className="pb-[110px]">
+              <VerseBlock
+                verse="But seek first the kingdom of God and his righteousness, and all these things will be added to you."
+                reference="Matthew 6:33 "
+              />
+            </div>
+          </>
         )}
       </div>
     </main>

@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { ArrowRight } from 'lucide-react';
+import VerseBlock from '../../components/VerseBlock';
 
 export default function CheckoutSuccessPage() {
   const searchParams = useSearchParams();
@@ -19,6 +20,11 @@ export default function CheckoutSuccessPage() {
       <Link href="/account" className="mt-[10px] inline-flex min-h-[46px] items-center justify-center gap-[10px] border border-transparent bg-brown px-5 text-[11px] uppercase tracking-[.08em] text-cream transition duration-200 hover:-translate-y-0.5 hover:shadow-[0_8px_24px_rgba(76,60,46,.16)]">
         View your orders <ArrowRight size={16} />
       </Link>
+
+      <VerseBlock
+        verse="Every good and perfect gift is from above, coming down from the Father of lights."
+        reference="James 1:17"
+      />
     </main>
   );
 }

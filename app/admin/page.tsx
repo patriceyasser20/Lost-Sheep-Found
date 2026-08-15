@@ -8,11 +8,6 @@ import ShippingPanel from './ShippingPanel';
 import OffersPanel from './OffersPanel';
 import SkuPanel from './SkuPanel';
 import PromoCodesPanel from './PromoCodesPanel';
-// import OrdersPanel from './OrdersPanel';
-// import ShippingPanel from './ShippingPanel';
-// import SkuPanel from './SkuPanel';
-// import PromoCodesPanel from './PromoCodesPanel';
-// import OffersPanel from './OffersPanel';
 
 const TABS = [
   { key: 'products', label: 'Products', icon: Package },

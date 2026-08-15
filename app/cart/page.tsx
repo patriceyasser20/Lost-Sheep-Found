@@ -30,19 +30,19 @@ export default function CartPage() {
   const shipping = lines.length > 0 ? SHIPPING : 0;
   const total = subtotal + shipping;
 
-  function updateQty(id: string, delta: number) {
+  function updateQty(lineId: string, delta: number) {
     setCart((prev) => {
       const next = prev
-        .map((l) => (l.id === id ? { ...l, qty: Math.max(1, l.qty + delta) } : l))
+        .map((l) => (l.lineId === lineId ? { ...l, qty: Math.max(1, l.qty + delta) } : l))
         .filter((l) => l.qty > 0);
       persistCart(next);
       return next;
     });
   }
 
-  function removeLine(id: string) {
+  function removeLine(lineId: string) {
     setCart((prev) => {
-      const next = prev.filter((l) => l.id !== id);
+      const next = prev.filter((l) => l.lineId !== lineId);
       persistCart(next);
       return next;
     });
@@ -80,41 +80,50 @@ export default function CartPage() {
         <div className="mx-auto grid max-w-[1240px] grid-cols-1 items-start gap-[60px] px-[30px] pb-[130px] md:grid-cols-[1.55fr_.95fr]">
           <div>
             <div className="border-t border-line">
-              {lines.map(({ line, product }) => (
-                <div key={line.id} className="grid grid-cols-[96px_1fr_auto_auto] items-center gap-[22px] border-b border-line py-[26px]">
-                  <div className="flex h-[108px] w-24 flex-shrink-0 items-center justify-center border border-line bg-paper-light text-gold">
-                    <span className="text-2xl">✦</span>
+              {lines.map(({ line, product }) => {
+                const selectionEntries = line.selections ? Object.values(line.selections) : [];
+                return (
+                  <div key={line.lineId} className="grid grid-cols-[96px_1fr_auto_auto] items-center gap-[22px] border-b border-line py-[26px]">
+                    <div className="flex h-[108px] w-24 flex-shrink-0 items-center justify-center border border-line bg-paper-light text-gold">
+                      <span className="text-2xl">✦</span>
+                    </div>
+                    <div>
+                      <h3 className="mb-[6px] text-lg tracking-[-.01em]">{product!.name}</h3>
+                      {selectionEntries.length > 0 ? (
+                        <p className="m-0 text-[11px] tracking-[.04em] text-brown-soft">
+                          {selectionEntries.map((s: any) => `${s.optionName}: ${s.value}`).join(' · ')}
+                        </p>
+                      ) : (
+                        <p className="m-0 text-[11px] tracking-[.04em] text-brown-soft">{product!.tag}</p>
+                      )}
+                      <button
+                        onClick={() => removeLine(line.lineId)}
+                        className="mt-2.5 border-0 bg-transparent p-0 text-[11px] uppercase tracking-[.06em] text-brown-soft underline underline-offset-[3px] hover:text-brown"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                    <div className="flex items-center border border-line">
+                      <button
+                        aria-label="Decrease quantity"
+                        onClick={() => updateQty(line.lineId, -1)}
+                        className="flex h-[34px] w-8 items-center justify-center border-0 bg-transparent text-brown hover:bg-paper-light"
+                      >
+                        <Minus size={13} />
+                      </button>
+                      <span className="w-[30px] text-center text-[13px]">{line.qty}</span>
+                      <button
+                        aria-label="Increase quantity"
+                        onClick={() => updateQty(line.lineId, 1)}
+                        className="flex h-[34px] w-8 items-center justify-center border-0 bg-transparent text-brown hover:bg-paper-light"
+                      >
+                        <Plus size={13} />
+                      </button>
+                    </div>
+                    <div className="min-w-[80px] text-right text-sm">EGP {product!.price * line.qty}</div>
                   </div>
-                  <div>
-                    <h3 className="mb-[6px] text-lg tracking-[-.01em]">{product!.name}</h3>
-                    <p className="m-0 text-[11px] tracking-[.04em] text-brown-soft">{product!.tag}</p>
-                    <button
-                      onClick={() => removeLine(line.id)}
-                      className="mt-2.5 border-0 bg-transparent p-0 text-[11px] uppercase tracking-[.06em] text-brown-soft underline underline-offset-[3px] hover:text-brown"
-                    >
-                      Remove
-                    </button>
-                  </div>
-                  <div className="flex items-center border border-line">
-                    <button
-                      aria-label="Decrease quantity"
-                      onClick={() => updateQty(line.id, -1)}
-                      className="flex h-[34px] w-8 items-center justify-center border-0 bg-transparent text-brown hover:bg-paper-light"
-                    >
-                      <Minus size={13} />
-                    </button>
-                    <span className="w-[30px] text-center text-[13px]">{line.qty}</span>
-                    <button
-                      aria-label="Increase quantity"
-                      onClick={() => updateQty(line.id, 1)}
-                      className="flex h-[34px] w-8 items-center justify-center border-0 bg-transparent text-brown hover:bg-paper-light"
-                    >
-                      <Plus size={13} />
-                    </button>
-                  </div>
-                  <div className="min-w-[80px] text-right text-sm">EGP {product!.price * line.qty}</div>
-                </div>
-              ))}
+                );
+              })}
             </div>
             <Link
               href="/shop"

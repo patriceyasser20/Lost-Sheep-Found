@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { supabaseClient } from '../../lib/supabaseClient';
+import VerseBlock from '../components/VerseBlock';
 
 async function checkAndSetAdmin(accessToken: string): Promise<boolean> {
   const res = await fetch('/api/admin-token', {
@@ -55,7 +56,7 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="mx-auto max-w-[420px] px-[30px] pt-[100px]">
+    <main className="mx-auto max-w-[420px] px-[30px] pb-[80px] pt-[100px]">
       <p className="mb-[6px] text-center text-[10px] uppercase tracking-[.16em] text-gold">Welcome back</p>
       <h2 className="mt-[30px] mb-4 text-center font-display text-[clamp(30px,3.6vw,38px)] font-medium tracking-[-.03em]">Sign in</h2>
 
@@ -86,9 +87,14 @@ export default function LoginPage() {
         </button>
       </form>
 
-      <p className="mt-[18px] text-center text-xs text-brown-soft">
+      <p className="mt-[18px] text-center py-5 text-xs text-brown-soft">
         New here? <Link href="/signup" className="text-xs uppercase tracking-[.08em] border-b border-gold pb-[5px]">Create an account</Link>
       </p>
+
+      <VerseBlock
+        verse="Come to me, all you who are weary and burdened, and I will give you rest."
+        reference="Matthew 11:28"
+      />
     </main>
   );
 }

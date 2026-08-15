@@ -1,3 +1,5 @@
+import VerseBlock from '../components/VerseBlock';
+
 export const metadata = {
   title: 'Returns & Exchange — Lost Sheep Found',
 };
@@ -11,7 +13,7 @@ export default function ReturnExchangePage() {
         <p className="mx-auto max-w-[460px] text-[15px] leading-[1.8] text-brown-soft">We want you to be glad you ordered. Here's how it works.</p>
       </section>
 
-      <div className="mx-auto max-w-[780px] px-[30px] pb-[120px] pt-[70px]">
+      <div className="mx-auto max-w-[780px] px-[30px] pb-[70px] pt-[70px]">
         <p className="mb-[6px] text-[10px] uppercase tracking-[.16em] text-gold">Updated August 2026</p>
 
         <h2 className="mb-4 mt-[30px] font-display text-[clamp(30px,3.6vw,38px)] font-medium tracking-[-.03em]">14-day return window</h2>
@@ -49,6 +51,11 @@ export default function ReturnExchangePage() {
           within 7 days with a photo and we'll sort out a replacement or
           refund at no cost to you.
         </p>
+
+        <VerseBlock
+          verse="A gentle answer turns away wrath, but a harsh word stirs up anger."
+          reference="Proverbs 15:1"
+        />
       </div>
     </main>
   );

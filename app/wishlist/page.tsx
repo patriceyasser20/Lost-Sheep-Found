@@ -1,5 +1,5 @@
 'use client';
-
+import VerseBlock from '../components/VerseBlock';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { ArrowRight, Heart, ShoppingBag } from 'lucide-react';
@@ -93,6 +93,10 @@ export default function WishlistPage() {
               </div>
             ))}
           </div>
+          <VerseBlock
+            verse="For God so loved the world, that he gave his only Son, that whoever believes in him should not perish but have eternal life."
+            reference="John 3:16"
+          />
         </div>
       )}
     </main>

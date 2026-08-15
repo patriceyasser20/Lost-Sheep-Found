@@ -1,3 +1,4 @@
+import VerseBlock from '../components/VerseBlock';
 export const metadata = {
   title: 'Sustainability — Lost Sheep Found',
 };
@@ -40,6 +41,11 @@ export default function SustainabilityPage() {
           specific piece, ask — we'll tell you honestly what we know.
         </p>
       </div>
+      <VerseBlock
+        verse="In the world you will have tribulation. But take heart; I have overcome the world."
+        reference="John 16:33"
+      />
+                  
     </main>
   );
 }

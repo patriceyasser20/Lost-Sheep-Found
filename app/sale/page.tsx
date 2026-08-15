@@ -1,5 +1,6 @@
 import ProductCard from '../components/ProductCard';
 import { getProducts } from '../../lib/productsServer';
+import VerseBlock from '../components/VerseBlock';
 
 export const metadata = {
   title: 'Sale — Lost Sheep Found',
@@ -23,6 +24,11 @@ export default async function SalePage() {
             <ProductCard product={product} key={product.id} />
           ))}
         </div>
+
+        <VerseBlock
+          verse="Freely you have received; freely give."
+          reference="Matthew 10:8"
+        />
       </div>
     </main>
   );
