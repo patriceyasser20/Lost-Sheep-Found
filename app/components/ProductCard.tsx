@@ -1,44 +1,102 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { ArrowRight, Heart } from 'lucide-react';
+import { Heart } from 'lucide-react';
+import Image from 'next/image';
+import { useWishlist } from '../context/WishlistContext';
+import { useCurrency } from '../context/CurrencyContext';
+import { getActiveOffersClient, findOfferForProduct, offerBadgeText, type Offer } from '../../lib/offers';
 import type { Product } from '../../lib/products';
 
-export default function ProductCard({ product }: { product: Product }) {
+type ProductWithSale = Product & {
+  isOnSale?: boolean;
+  discountPercentage?: number;
+  hasVariantSale?: boolean;
+  maxVariantDiscount?: number;
+};
+
+export default function ProductCard({ product }: { product: ProductWithSale }) {
+  const { isWishlisted, toggleWishlist } = useWishlist();
+  const { format } = useCurrency();
+  const active = isWishlisted(product.id);
+
+  const [offers, setOffers] = useState<Offer[]>([]);
+  useEffect(() => {
+    let mounted = true;
+    getActiveOffersClient().then((data) => { if (mounted) setOffers(data); });
+    return () => { mounted = false; };
+  }, []);
+
+  const activeOffer = findOfferForProduct(product, offers);
+  const discount = product.discountPercentage || 0;
+  const salePrice = product.isOnSale ? product.price * (1 - discount / 100) : product.price;
+  const hasSaleBadge = (product.isOnSale && discount > 0) || (!product.isOnSale && product.hasVariantSale && (product.maxVariantDiscount || 0) > 0);
+
   return (
-    <div>
-      <Link href={`/product/${product.slug}`}>
-        <div className="relative flex aspect-[.88] flex-col items-center justify-center border border-line bg-paper-light text-gold">
-          {product.imageUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={product.imageUrl}
-              alt={product.name}
-              className="h-full w-full object-cover"
-            />
-          ) : (
+    <Link href={`/product/${product.slug}`} className="group block border border-line bg-cream">
+      <div className="relative aspect-square overflow-hidden border-b border-line bg-paper-light">
+        {product.imageUrl ? (
+          <Image
+            src={product.imageUrl}
+            alt={product.name}
+            fill
+            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+            className="object-cover transition-transform duration-500 group-hover:scale-105"
+          />
+        ) : (
+          <div className="flex h-full w-full flex-col items-center justify-center gap-2 text-gold">
+            <span className="text-2xl">✦</span>
+            <span className="text-[9px] uppercase tracking-[.15em] text-brown-soft">{product.tag}</span>
+          </div>
+        )}
+
+        {product.isOnSale && discount > 0 && (
+          <div className="absolute left-3 top-3 z-10 bg-[#a14b3c] px-2.5 py-1 text-[10px] font-medium uppercase tracking-[.06em] text-cream">
+            -{discount}%
+          </div>
+        )}
+        {!product.isOnSale && product.hasVariantSale && (product.maxVariantDiscount || 0) > 0 && (
+          <div className="absolute left-3 top-3 z-10 bg-gold px-2.5 py-1 text-[10px] font-medium uppercase tracking-[.06em] text-cream">
+            Up to -{product.maxVariantDiscount}%
+          </div>
+        )}
+        {activeOffer && (
+          <div
+            className="absolute left-3 z-10 bg-brown px-2.5 py-1 text-[10px] font-medium uppercase tracking-[.06em] text-cream"
+            style={{ top: hasSaleBadge ? '2.75rem' : '0.75rem' }}
+          >
+            {offerBadgeText(activeOffer)}
+          </div>
+        )}
+
+        <button
+          aria-label={active ? 'Remove from wishlist' : 'Add to wishlist'}
+          onClick={(e) => {
+            e.preventDefault();
+            toggleWishlist(product.id);
+          }}
+          className="absolute right-3 top-3 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-cream/90 text-gold shadow transition hover:scale-110"
+        >
+          <Heart size={16} strokeWidth={1.6} fill={active ? 'currentColor' : 'none'} />
+        </button>
+      </div>
+
+      <div className="p-4">
+        <h3 className="truncate font-display text-lg font-medium tracking-[-.01em] text-brown">
+          {product.name}
+        </h3>
+        <div className="mt-1 flex items-baseline gap-2">
+          {product.isOnSale && discount > 0 ? (
             <>
-              <div className="absolute h-[67%] w-[58%] border border-gold/[.55] [border-radius:48%_48%_4%_4%]" />
-              <span className="relative z-[1] text-[27px]">✦</span>
-              <span className="relative z-[1] mt-[10px] text-[9px] uppercase tracking-[.15em]">
-                {product.categoryName}
-              </span>
+              <span className="text-[13px] text-brown-soft line-through">{format(product.price)}</span>
+              <span className="text-lg font-medium text-[#a14b3c]">{format(salePrice)}</span>
             </>
+          ) : (
+            <span className="text-[13px] text-brown-soft">{product.priceLabel}</span>
           )}
         </div>
-      </Link>
-      <div className="flex items-center justify-between px-1 py-[17px]">
-        <Link href={`/product/${product.slug}`}>
-          <h3 className="m-0 mb-1 text-[22px]">{product.name}</h3>
-          <p className="m-0 text-[11px] tracking-[.05em] text-brown-soft">{product.priceLabel}</p>
-        </Link>
-        <div className="flex gap-[10px]">
-          <button aria-label="Add to wishlist" className="cursor-pointer border-0 bg-transparent text-gold">
-            <Heart size={16} strokeWidth={1.6} />
-          </button>
-          <ArrowRight size={17} />
-        </div>
       </div>
-    </div>
+    </Link>
   );
 }

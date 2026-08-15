@@ -9,6 +9,8 @@ import { getProductsClient, type Product } from '../../lib/products';
 import { getCart, type CartLine } from '../../lib/localCart';
 import { useAuth } from '../context/AuthContext';
 import { getShippingCitiesClient, type ShippingCity } from '../../lib/shipping';
+import VerseBlock from '../components/VerseBlock';
+import { useCart } from '../context/CartContext';
 
 type PaymentMethod = 'paymob' | 'cod';
 
@@ -16,6 +18,7 @@ export default function CheckoutPage() {
   const router = useRouter();
   const { user } = useAuth();
   const [supabase] = useState(() => createClient());
+  const { clearCart } = useCart();
 
   const [products, setProducts] = useState<Product[]>([]);
   const [cart, setCart] = useState<CartLine[]>([]);
@@ -173,6 +176,7 @@ export default function CheckoutPage() {
       if (itemsError) console.error('Failed to insert order items:', itemsError);
 
       if (paymentMethod === 'cod') {
+        clearCart();
         router.push(`/checkout/success?order_id=${order.id}`);
         return;
       }
@@ -322,6 +326,10 @@ export default function CheckoutPage() {
           </p>
         </aside>
       </form>
+      <VerseBlock
+          verse="Commit your way to the Lord; trust in him, and he will act."
+          reference="Psalm 37:5"
+      />
     </main>
   );
 }

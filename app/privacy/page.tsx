@@ -68,12 +68,11 @@ export default function PrivacyPage() {
           We'll update this page if our practices change, and note the date
           at the top so you can see when it was last revised.
         </p>
-
-        <VerseBlock
+      </div>
+      <VerseBlock
           verse="Let all that you do be done in love."
           reference="1 Corinthians 16:14"
         />
-      </div>
     </main>
   );
 }

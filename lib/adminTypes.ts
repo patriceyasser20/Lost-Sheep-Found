@@ -60,8 +60,11 @@ export type AdminOrder = {
   id: string;
   customerName: string;
   email: string;
+  phone: string;
+  street: string;
+  apartment: string;
   city: string;
-  isRegistered: boolean; 
+  isRegistered: boolean;
   items: AdminOrderItem[];
   subtotal: number;
   deliveryFee: number;

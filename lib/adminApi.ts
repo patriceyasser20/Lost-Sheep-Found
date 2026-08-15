@@ -36,8 +36,11 @@ function mapOrder(row: any): AdminOrder {
     id: row.id,
     customerName,
     email: addr.email || '—',
+    phone: addr.phone || '—',
+    street: addr.street || '—',
+    apartment: addr.apartment || '',
     city: row.city || '—',
-    isRegistered: Boolean(row.user_id),   // ← the actual signal, not name presence
+    isRegistered: Boolean(row.user_id),
     items,
     subtotal: Number(row.subtotal) || 0,
     deliveryFee: Number(row.delivery_fee) || 0,

@@ -51,12 +51,11 @@ export default function ReturnExchangePage() {
           within 7 days with a photo and we'll sort out a replacement or
           refund at no cost to you.
         </p>
-
-        <VerseBlock
+      </div>
+      <VerseBlock
           verse="A gentle answer turns away wrath, but a harsh word stirs up anger."
           reference="Proverbs 15:1"
         />
-      </div>
     </main>
   );
 }

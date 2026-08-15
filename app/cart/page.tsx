@@ -4,19 +4,15 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { ArrowRight, Minus, Plus } from 'lucide-react';
 import { getProductsClient, type Product } from '../../lib/products';
-import { getCart, setCart as persistCart, type CartLine } from '../../lib/localCart';
+import { useCart } from '../context/CartContext';
 import VerseBlock from '../components/VerseBlock';
-
-const SHIPPING = 90;
 
 export default function CartPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
-  const [cart, setCart] = useState<CartLine[]>([]);
-  const [promo, setPromo] = useState('');
+  const { lines: cart, updateQty, removeLine } = useCart();
 
   useEffect(() => {
-    setCart(getCart());
     getProductsClient().then((data) => {
       setProducts(data);
       setLoading(false);
@@ -28,26 +24,7 @@ export default function CartPage() {
     .filter((l) => l.product);
 
   const subtotal = lines.reduce((sum, l) => sum + l.product!.price * l.line.qty, 0);
-  const shipping = lines.length > 0 ? SHIPPING : 0;
-  const total = subtotal + shipping;
-
-  function updateQty(lineId: string, delta: number) {
-    setCart((prev) => {
-      const next = prev
-        .map((l) => (l.lineId === lineId ? { ...l, qty: Math.max(1, l.qty + delta) } : l))
-        .filter((l) => l.qty > 0);
-      persistCart(next);
-      return next;
-    });
-  }
-
-  function removeLine(lineId: string) {
-    setCart((prev) => {
-      const next = prev.filter((l) => l.lineId !== lineId);
-      persistCart(next);
-      return next;
-    });
-  }
+  const total = subtotal;
 
   if (loading) {
     return (
@@ -85,8 +62,17 @@ export default function CartPage() {
                 const selectionEntries = line.selections ? Object.values(line.selections) : [];
                 return (
                   <div key={line.lineId} className="grid grid-cols-[96px_1fr_auto_auto] items-center gap-[22px] border-b border-line py-[26px]">
-                    <div className="flex h-[108px] w-24 flex-shrink-0 items-center justify-center border border-line bg-paper-light text-gold">
-                      <span className="text-2xl">✦</span>
+                    <div className="flex h-[108px] w-24 flex-shrink-0 items-center justify-center overflow-hidden border border-line bg-paper-light text-gold">
+                      {product!.imageUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={product!.imageUrl}
+                          alt={product!.name}
+                          className="h-full w-full object-cover"
+                        />
+                      ) : (
+                        <span className="text-2xl">✦</span>
+                      )}
                     </div>
                     <div>
                       <h3 className="mb-[6px] text-lg tracking-[-.01em]">{product!.name}</h3>
@@ -140,23 +126,6 @@ export default function CartPage() {
             <div className="flex justify-between border-b border-line py-[11px] text-[13.5px] text-brown-soft">
               <span>Subtotal</span>
               <span className="text-brown">EGP {subtotal}</span>
-            </div>
-            <div className="flex justify-between border-b border-line py-[11px] text-[13.5px] text-brown-soft">
-              <span>Shipping</span>
-              <span className="text-brown">EGP {shipping}</span>
-            </div>
-
-            <div className="my-[18px] flex gap-2">
-              <input
-                type="text"
-                placeholder="Promo code"
-                value={promo}
-                onChange={(e) => setPromo(e.target.value)}
-                className="flex-1 border border-line bg-cream px-3 py-[11px] text-[13px] outline-none"
-              />
-              <button className="cursor-pointer border border-brown bg-transparent px-4 text-[11px] uppercase tracking-[.06em] text-brown">
-                Apply
-              </button>
             </div>
 
             <div className="flex justify-between pt-[18px] text-base text-brown">

@@ -68,14 +68,14 @@ export default function ShopPageClient({ initialProducts }: { initialProducts: P
               ))}
             </div>
             <div className="pb-[110px]">
-              <VerseBlock
-                verse="But seek first the kingdom of God and his righteousness, and all these things will be added to you."
-                reference="Matthew 6:33 "
-              />
             </div>
           </>
         )}
       </div>
+      <VerseBlock
+          verse="But seek first the kingdom of God and his righteousness, and all these things will be added to you."
+          reference="Matthew 6:33 "
+      />
     </main>
   );
 }

@@ -56,40 +56,42 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="mx-auto max-w-[420px] px-[30px] pb-[80px] pt-[100px]">
-      <p className="mb-[6px] text-center text-[10px] uppercase tracking-[.16em] text-gold">Welcome back</p>
-      <h2 className="mt-[30px] mb-4 text-center font-display text-[clamp(30px,3.6vw,38px)] font-medium tracking-[-.03em]">Sign in</h2>
+    <main>
+      <div className="mx-auto max-w-[420px] px-[30px] pb-[80px] pt-[100px]">
+        <p className="mb-[6px] text-center text-[10px] uppercase tracking-[.16em] text-gold">Welcome back</p>
+        <h2 className="mt-[30px] mb-4 text-center font-display text-[clamp(30px,3.6vw,38px)] font-medium tracking-[-.03em]">Sign in</h2>
 
-      <button
-        onClick={signInWithGoogle}
-        className="mb-5 flex w-full min-h-[46px] items-center justify-center gap-[10px] border border-brown bg-transparent px-5 text-[11px] uppercase tracking-[.08em] text-brown transition duration-200 hover:bg-brown hover:text-cream disabled:cursor-not-allowed disabled:opacity-45"
-        disabled={loading}
-      >
-        Continue with Google
-      </button>
-
-      <form onSubmit={handleLogin}>
-        <div className="mb-[18px] flex flex-col gap-2">
-          <label htmlFor="email" className="text-[10.5px] uppercase tracking-[.12em] text-brown-soft">Email</label>
-          <input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required className="border border-line bg-cream px-[14px] py-[13px] text-sm outline-none focus:border-gold" />
-        </div>
-        <div className="mb-[18px] flex flex-col gap-2">
-          <label htmlFor="password" className="text-[10.5px] uppercase tracking-[.12em] text-brown-soft">Password</label>
-          <input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required className="border border-line bg-cream px-[14px] py-[13px] text-sm outline-none focus:border-gold" />
-        </div>
-        {error && <p className="mt-1 text-xs text-[#a14b3c]">{error}</p>}
         <button
-          type="submit"
-          className="flex w-full min-h-[46px] items-center justify-center gap-[10px] border border-transparent bg-brown px-5 text-[11px] uppercase tracking-[.08em] text-cream transition duration-200 hover:-translate-y-0.5 hover:shadow-[0_8px_24px_rgba(76,60,46,.16)] disabled:translate-y-0 disabled:cursor-not-allowed disabled:opacity-45 disabled:shadow-none"
+          onClick={signInWithGoogle}
+          className="mb-5 flex w-full min-h-[46px] items-center justify-center gap-[10px] border border-brown bg-transparent px-5 text-[11px] uppercase tracking-[.08em] text-brown transition duration-200 hover:bg-brown hover:text-cream disabled:cursor-not-allowed disabled:opacity-45"
           disabled={loading}
         >
-          {loading ? 'Signing in…' : 'Sign in'}
+          Continue with Google
         </button>
-      </form>
 
-      <p className="mt-[18px] text-center py-5 text-xs text-brown-soft">
-        New here? <Link href="/signup" className="text-xs uppercase tracking-[.08em] border-b border-gold pb-[5px]">Create an account</Link>
-      </p>
+        <form onSubmit={handleLogin}>
+          <div className="mb-[18px] flex flex-col gap-2">
+            <label htmlFor="email" className="text-[10.5px] uppercase tracking-[.12em] text-brown-soft">Email</label>
+            <input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required className="border border-line bg-cream px-[14px] py-[13px] text-sm outline-none focus:border-gold" />
+          </div>
+          <div className="mb-[18px] flex flex-col gap-2">
+            <label htmlFor="password" className="text-[10.5px] uppercase tracking-[.12em] text-brown-soft">Password</label>
+            <input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required className="border border-line bg-cream px-[14px] py-[13px] text-sm outline-none focus:border-gold" />
+          </div>
+          {error && <p className="mt-1 text-xs text-[#a14b3c]">{error}</p>}
+          <button
+            type="submit"
+            className="flex w-full min-h-[46px] items-center justify-center gap-[10px] border border-transparent bg-brown px-5 text-[11px] uppercase tracking-[.08em] text-cream transition duration-200 hover:-translate-y-0.5 hover:shadow-[0_8px_24px_rgba(76,60,46,.16)] disabled:translate-y-0 disabled:cursor-not-allowed disabled:opacity-45 disabled:shadow-none"
+            disabled={loading}
+          >
+            {loading ? 'Signing in…' : 'Sign in'}
+          </button>
+        </form>
+
+        <p className="mt-[18px] text-center py-5 text-xs text-brown-soft">
+          New here? <Link href="/signup" className="text-xs uppercase tracking-[.08em] border-b border-gold pb-[5px]">Create an account</Link>
+        </p>
+      </div>
 
       <VerseBlock
         verse="Come to me, all you who are weary and burdened, and I will give you rest."

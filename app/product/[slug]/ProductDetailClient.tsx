@@ -7,7 +7,8 @@ import ProductCard from '../../components/ProductCard';
 import VerseBlock from '../../components/VerseBlock';
 import type { Product } from '../../../lib/products';
 import { useRouter } from 'next/navigation';
-import { addToCart, addToWishlist } from '../../../lib/localCart';
+import { useCart } from '../../context/CartContext';
+import { addToWishlist } from '../../../lib/localCart';
 
 export default function ProductDetailClient({
   product,
@@ -16,6 +17,7 @@ export default function ProductDetailClient({
   product: Product;
   related: Product[];
 }) {
+  const { addToCart } = useCart();
   const [customSelections, setCustomSelections] = useState<Selections>({});
   const [customComplete, setCustomComplete] = useState(!product.customizable);
 
@@ -132,11 +134,6 @@ export default function ProductDetailClient({
               Choose the required options above before adding this piece to your cart.
             </p>
           )}
-
-          <VerseBlock
-            verse="Your word is a lamp for my feet, a light on my path."
-            reference="Psalm 119:105"
-          />
         </div>
       </div>
 
@@ -153,6 +150,10 @@ export default function ProductDetailClient({
           </div>
         </section>
       )}
+      <VerseBlock
+        verse="Your word is a lamp for my feet, a light on my path."
+        reference="Psalm 119:105"
+      />
     </main>
   );
 }

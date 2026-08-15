@@ -5,7 +5,7 @@ import Image from 'next/image';
 import { type AdminOrder, type OrderStatus } from '../../lib/adminTypes';
 import { adminApi } from '../../lib/adminApi';
 
-const statuses: OrderStatus[] = ['pending', 'processing', 'shipped', 'delivered', 'cancelled'];
+
 
 type Resolved = { optionName: string; label: string; swatch?: string; image?: string };
 
@@ -79,18 +79,13 @@ export default function OrdersPanel() {
                         Shipping to <span className="text-brown">{o.city}</span>
                       </p>
                     )}
-                  </div>
-
-                  <select
-                    value={o.status}
-                    onChange={(e) => updateStatus(o.id, e.target.value as OrderStatus)}
-                    className="border border-line bg-cream px-3 py-2 text-xs uppercase tracking-[.06em]"
-                  >
-                    {!statuses.includes(o.status) && (
-                      <option value={o.status}>{o.status} (unrecognized)</option>
+                    {o.street !== '—' && (
+                      <p className="mt-1 text-[12px] text-brown-soft">
+                        {o.street}{o.apartment ? `, ${o.apartment}` : ''}
+                        {o.phone !== '—' && <> · {o.phone}</>}
+                      </p>
                     )}
-                    {statuses.map((s) => <option key={s} value={s}>{s}</option>)}
-                  </select>
+                  </div>
                 </div>
 
                 {/* Items */}

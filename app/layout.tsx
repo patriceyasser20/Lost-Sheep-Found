@@ -3,6 +3,8 @@ import "./globals.css";
 import { AuthProvider } from "./context/AuthContext";
 import { CurrencyProvider } from "./context/CurrencyContext";
 import { LanguageProvider } from "./context/LanguageContext";
+import { CartProvider } from "./context/CartContext";
+import { WishlistProvider } from "./context/WishlistContext";
 import Header from "./components/Header";
 import Footer from "./components/Footer";
 import SeasonalBanner from "./components/SeasonalBanner";
@@ -30,13 +32,17 @@ export default function RootLayout({
         <AuthProvider>
           <CurrencyProvider>
             <LanguageProvider>
-              <Header />
-              <SeasonalBanner />
-              {children}
-              <FirstOrderPopup />
-              <Footer />
-              <WhatsAppWidget />
-              <SupportChatbot />
+              <CartProvider>
+                <WishlistProvider>
+                  <Header />
+                  <SeasonalBanner />
+                  {children}
+                  <FirstOrderPopup />
+                  <Footer />
+                  <WhatsAppWidget />
+                  <SupportChatbot />
+                </WishlistProvider>
+              </CartProvider>
             </LanguageProvider>
           </CurrencyProvider>
         </AuthProvider>

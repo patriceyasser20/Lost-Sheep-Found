@@ -2,18 +2,21 @@
 
 import Link from 'next/link';
 import { useState } from 'react';
-import { Heart, Menu, ShoppingBag, User } from 'lucide-react';
+import { Heart, LogOut, Menu, ShoppingBag, User } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { useCurrency } from '../context/CurrencyContext';
 import { useTranslation } from '../context/LanguageContext';
-
-const currencies = ['EGP', 'USD', 'EUR', 'GBP'] as const;
+import { useCart } from '../context/CartContext';
+import { useWishlist } from '../context/WishlistContext';
 
 export default function Header() {
-  const { user } = useAuth();
-  const { currency, setCurrency } = useCurrency();
+  const { user, signOut } = useAuth();
   const { t, language, changeLanguage } = useTranslation();
+  const { itemCount } = useCart();
+  const { ids: wishlistIds } = useWishlist();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [accountOpen, setAccountOpen] = useState(false);
+
+  const hasWishlistItems = wishlistIds.length > 0;
 
   return (
     <header className="sticky top-0 z-20 h-[68px] md:h-[78px] border-b border-brown/[.12] bg-paper/[.88] backdrop-blur-md">
@@ -39,16 +42,6 @@ export default function Header() {
         </nav>
 
         <div className="flex items-center gap-[22px]">
-          <select
-            aria-label="Currency"
-            value={currency}
-            onChange={(e) => setCurrency(e.target.value as typeof currencies[number])}
-            className="border-0 bg-transparent text-[11px] tracking-[.08em]"
-          >
-            {currencies.map((c) => (
-              <option key={c} value={c}>{c}</option>
-            ))}
-          </select>
           <button
             aria-label="Language"
             onClick={() => changeLanguage(language === 'en' ? 'ar' : 'en')}
@@ -56,9 +49,63 @@ export default function Header() {
           >
             {language === 'en' ? 'AR' : 'EN'}
           </button>
-          <Link href={user ? '/account' : '/login'} aria-label="Account"><User size={19} strokeWidth={1.7} /></Link>
-          <Link href="/wishlist" aria-label="Wishlist"><Heart size={19} strokeWidth={1.7} /></Link>
-          <Link href="/cart" aria-label="Shopping bag"><ShoppingBag size={20} strokeWidth={1.7} /></Link>
+
+          {/* Account */}
+          {user ? (
+            <div className="relative">
+              <button
+                aria-label="Account menu"
+                onClick={() => setAccountOpen((open) => !open)}
+                className="border-0 bg-transparent text-brown"
+              >
+                <User size={19} strokeWidth={1.7} />
+              </button>
+              {accountOpen && (
+                <div
+                  className="absolute right-0 top-[calc(100%+14px)] w-[170px] border border-line bg-cream py-2 shadow-[0_8px_24px_rgba(76,60,46,.12)]"
+                  onMouseLeave={() => setAccountOpen(false)}
+                >
+                  <Link
+                    href="/account"
+                    onClick={() => setAccountOpen(false)}
+                    className="block px-4 py-2.5 text-xs uppercase tracking-[.08em] text-brown-soft hover:bg-paper-light hover:text-brown"
+                  >
+                    My account
+                  </Link>
+                  <button
+                    onClick={() => {
+                      setAccountOpen(false);
+                      signOut();
+                    }}
+                    className="flex w-full items-center gap-2 px-4 py-2.5 text-xs uppercase tracking-[.08em] text-brown-soft hover:bg-paper-light hover:text-brown"
+                  >
+                    <LogOut size={13} /> Sign out
+                  </button>
+                </div>
+              )}
+            </div>
+          ) : (
+            <Link href="/login" aria-label="Login"><User size={19} strokeWidth={1.7} /></Link>
+          )}
+
+          {/* Wishlist — filled + gold when non-empty */}
+          <Link href="/wishlist" aria-label="Wishlist">
+            <Heart
+              size={19}
+              strokeWidth={1.7}
+              className={hasWishlistItems ? 'fill-gold text-gold' : 'text-brown'}
+            />
+          </Link>
+
+          {/* Cart with count badge */}
+          <Link href="/cart" aria-label="Shopping bag" className="relative">
+            <ShoppingBag size={20} strokeWidth={1.7} />
+            {itemCount > 0 && (
+              <span className="absolute -right-2 -top-2 flex h-4 min-w-4 items-center justify-center rounded-full bg-brown px-1 text-[9px] font-medium leading-none text-cream">
+                {itemCount}
+              </span>
+            )}
+          </Link>
         </div>
       </div>
 

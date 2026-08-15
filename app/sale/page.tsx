@@ -24,12 +24,11 @@ export default async function SalePage() {
             <ProductCard product={product} key={product.id} />
           ))}
         </div>
-
-        <VerseBlock
+      </div>
+      <VerseBlock
           verse="Freely you have received; freely give."
           reference="Matthew 10:8"
         />
-      </div>
     </main>
   );
 }

@@ -496,6 +496,16 @@ export default function ProductsPanel() {
     return data.publicUrl;
   }
 
+  async function deleteProduct(p: Product) {
+    if (!confirm(`Delete "${p.name}" permanently? This cannot be undone.`)) return;
+    try {
+      await adminApi.deleteProduct(p.id);
+      setList((prev) => prev.filter((item) => item.id !== p.id));
+    } catch (err: any) {
+      alert('Failed to delete: ' + err.message);
+    }
+  }
+
   async function saveProduct() {
     if (!form.name.trim() || !form.price) {
         alert('Name and price are required');
@@ -750,12 +760,21 @@ export default function ProductsPanel() {
                       >
                         <Edit2 size={12} /> Quick edit
                       </button>
-                      <button
-                        onClick={() => openEditForm(p)}
-                        className="text-[11px] uppercase tracking-[.06em] text-gold transition hover:text-brown"
-                      >
-                        Full Edit
-                      </button>
+                      <div className="flex items-center gap-4">
+                        <button
+                          onClick={() => openEditForm(p)}
+                          className="text-[11px] uppercase tracking-[.06em] text-gold transition hover:text-brown"
+                        >
+                          Full Edit
+                        </button>
+                        <button
+                          onClick={() => deleteProduct(p)}
+                          aria-label={`Delete ${p.name}`}
+                          className="text-brown-soft transition hover:text-[#a14b3c]"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
                     </div>
                   </>
                 )}
