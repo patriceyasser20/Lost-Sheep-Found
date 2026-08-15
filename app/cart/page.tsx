@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { ArrowRight, Minus, Plus } from 'lucide-react';
 import { getProductsClient, type Product } from '../../lib/products';
 import { getCart, setCart as persistCart, type CartLine } from '../../lib/localCart';
+import VerseBlock from '../components/VerseBlock';
 
 const SHIPPING = 90;
 
@@ -172,6 +173,10 @@ export default function CartPage() {
           </aside>
         </div>
       )}
+      <VerseBlock
+        verse="Whenever I am afraid, I will trust in You."
+        reference="Psalms 56:3"
+      />
     </main>
   );
 }
