@@ -4,9 +4,9 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Heart } from 'lucide-react';
 import Image from 'next/image';
-import { useWishlist } from '../context/WishlistContext';
 import { useCurrency } from '../context/CurrencyContext';
 import { getActiveOffersClient, findOfferForProduct, offerBadgeText, type Offer } from '../../lib/offers';
+import { getWishlist, addToWishlist, removeFromWishlist } from '../../lib/localCart';
 import type { Product } from '../../lib/products';
 
 type ProductWithSale = Product & {
@@ -17,9 +17,32 @@ type ProductWithSale = Product & {
 };
 
 export default function ProductCard({ product }: { product: ProductWithSale }) {
-  const { isWishlisted, toggleWishlist } = useWishlist();
   const { format } = useCurrency();
-  const active = isWishlisted(product.id);
+  const [active, setActive] = useState(false);
+
+  useEffect(() => {
+    setActive(getWishlist().includes(product.id));
+
+    function sync() {
+      setActive(getWishlist().includes(product.id));
+    }
+    window.addEventListener('wishlist-updated', sync);
+    window.addEventListener('storage', sync);
+    return () => {
+      window.removeEventListener('wishlist-updated', sync);
+      window.removeEventListener('storage', sync);
+    };
+  }, [product.id]);
+
+  function toggleWishlist(e: React.MouseEvent) {
+    e.preventDefault();
+    if (active) {
+      removeFromWishlist(product.id);
+    } else {
+      addToWishlist(product.id);
+    }
+    setActive(!active);
+  }
 
   const [offers, setOffers] = useState<Offer[]>([]);
   useEffect(() => {
@@ -72,11 +95,10 @@ export default function ProductCard({ product }: { product: ProductWithSale }) {
 
         <button
           aria-label={active ? 'Remove from wishlist' : 'Add to wishlist'}
-          onClick={(e) => {
-            e.preventDefault();
-            toggleWishlist(product.id);
-          }}
-          className="absolute right-3 top-3 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-cream/90 text-gold shadow transition hover:scale-110"
+          onClick={toggleWishlist}
+          className={`absolute right-3 top-3 z-10 flex h-8 w-8 items-center justify-center rounded-full shadow transition hover:scale-110 ${
+            active ? 'bg-gold text-cream' : 'bg-cream/90 text-gold'
+          }`}
         >
           <Heart size={16} strokeWidth={1.6} fill={active ? 'currentColor' : 'none'} />
         </button>

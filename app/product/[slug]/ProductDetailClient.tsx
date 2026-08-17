@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import ProductCustomizer, { type Selections } from '../../components/ProductCustomizer';
 import Link from 'next/link';
 import { ArrowRight, Heart, ShoppingBag } from 'lucide-react';
@@ -8,7 +8,7 @@ import VerseBlock from '../../components/VerseBlock';
 import type { Product } from '../../../lib/products';
 import { useRouter } from 'next/navigation';
 import { useCart } from '../../context/CartContext';
-import { addToWishlist } from '../../../lib/localCart';
+import { getWishlist, setWishlist as persistWishlist } from '../../../lib/localCart';
 
 export default function ProductDetailClient({
   product,
@@ -20,6 +20,11 @@ export default function ProductDetailClient({
   const { addToCart } = useCart();
   const [customSelections, setCustomSelections] = useState<Selections>({});
   const [customComplete, setCustomComplete] = useState(!product.customizable);
+  const [saved, setSaved] = useState(false);
+
+  useEffect(() => {
+    setSaved(getWishlist().includes(product.id));
+  }, [product.id]);
 
   const gallery = product.images.length > 0 ? product.images : product.imageUrl ? [product.imageUrl] : [];
   const [activeImage, setActiveImage] = useState(0);
@@ -37,8 +42,12 @@ export default function ProductDetailClient({
   }
 
   function handleSave() {
-    addToWishlist(product.id);
-    router.push('/wishlist');
+    const current = getWishlist();
+    const next = current.includes(product.id)
+      ? current.filter((id) => id !== product.id)
+      : [...current, product.id];
+    persistWishlist(next);
+    setSaved(next.includes(product.id));
   }
 
   return (
@@ -101,7 +110,7 @@ export default function ProductDetailClient({
           )}
 
           {product.customizable && (
-            <div className="mx-auto max-w-[1240px] px-5 md:px-[30px]">
+            
               <ProductCustomizer
                 productId={product.id}
                 productName={product.name}
@@ -110,7 +119,6 @@ export default function ProductDetailClient({
                   setCustomComplete(complete);
                 }}
               />
-            </div>
           )}
 
           <div className="mb-9 flex gap-[14px]">
@@ -123,9 +131,13 @@ export default function ProductDetailClient({
             </button>
             <button
               onClick={handleSave}
-              className="inline-flex min-h-[46px] items-center justify-center gap-[10px] border border-brown bg-transparent px-5 text-[11px] uppercase tracking-[.08em] text-brown transition duration-200 hover:bg-brown hover:text-cream"
+              className={`inline-flex min-h-[46px] items-center justify-center gap-[10px] border px-5 text-[11px] uppercase tracking-[.08em] transition duration-200 ${
+                saved
+                  ? 'border-gold bg-gold text-cream'
+                  : 'border-brown bg-transparent text-brown hover:bg-brown hover:text-cream'
+              }`}
             >
-              Save <Heart size={16} />
+              {saved ? 'Saved' : 'Save'} <Heart size={16} className={saved ? 'fill-cream' : ''} />
             </button>
           </div>
 

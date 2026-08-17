@@ -1,20 +1,35 @@
 'use client';
 
 import Link from 'next/link';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Heart, LogOut, Menu, ShoppingBag, User } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useTranslation } from '../context/LanguageContext';
 import { useCart } from '../context/CartContext';
-import { useWishlist } from '../context/WishlistContext';
+import { getWishlist } from '../../lib/localCart';
 
 export default function Header() {
   const { user, signOut } = useAuth();
   const { t, language, changeLanguage } = useTranslation();
   const { itemCount } = useCart();
-  const { ids: wishlistIds } = useWishlist();
+  const [wishlistIds, setWishlistIds] = useState<string[]>([]);
   const [menuOpen, setMenuOpen] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
+
+  useEffect(() => {
+    setWishlistIds(getWishlist()); // initial read on mount
+
+    function sync() {
+      setWishlistIds(getWishlist());
+    }
+
+    window.addEventListener('wishlist-updated', sync);
+    window.addEventListener('storage', sync); // keeps other tabs in sync too
+    return () => {
+      window.removeEventListener('wishlist-updated', sync);
+      window.removeEventListener('storage', sync);
+    };
+  }, []);
 
   const hasWishlistItems = wishlistIds.length > 0;
 
@@ -37,7 +52,7 @@ export default function Header() {
         <nav className="mx-auto hidden gap-[34px] md:flex" aria-label="Main navigation">
           <Link href="/shop" className="text-xs tracking-[.1em] uppercase text-brown-soft hover:text-brown">{t('nav.shop')}</Link>
           <Link href="/collection/bible-journals" className="text-xs tracking-[.1em] uppercase text-brown-soft hover:text-brown">{t('nav.journals')}</Link>
-          <Link href="/collection/wood-blocks" className="text-xs tracking-[.1em] uppercase text-brown-soft hover:text-brown">{t('nav.woodVerses')}</Link>
+          <Link href="/bible" className="text-xs tracking-[.1em] uppercase text-brown-soft hover:text-brown">Read Bible</Link>
           <Link href="/our-story" className="text-xs tracking-[.1em] uppercase text-brown-soft hover:text-brown">{t('nav.ourStory')}</Link>
         </nav>
 
@@ -88,13 +103,18 @@ export default function Header() {
             <Link href="/login" aria-label="Login"><User size={19} strokeWidth={1.7} /></Link>
           )}
 
-          {/* Wishlist — filled + gold when non-empty */}
-          <Link href="/wishlist" aria-label="Wishlist">
+          {/* Wishlist — filled + gold when non-empty, with a count badge */}
+          <Link href="/wishlist" aria-label="Wishlist" className="relative">
             <Heart
               size={19}
               strokeWidth={1.7}
               className={hasWishlistItems ? 'fill-gold text-gold' : 'text-brown'}
             />
+            {hasWishlistItems && (
+              <span className="absolute -right-2 -top-2 flex h-4 min-w-4 items-center justify-center rounded-full bg-gold px-1 text-[9px] font-medium leading-none text-cream">
+                {wishlistIds.length}
+              </span>
+            )}
           </Link>
 
           {/* Cart with count badge */}

@@ -21,6 +21,7 @@ export function getCart(): CartLine[] {
 
 export function setCart(cart: CartLine[]) {
   localStorage.setItem(CART_KEY, JSON.stringify(cart));
+  window.dispatchEvent(new Event('cart-updated'));
 }
 
 export function addToCart(id: string, qty: number = 1, selections?: Record<string, any>) {
@@ -47,6 +48,7 @@ export function getWishlist(): string[] {
 
 export function setWishlist(list: string[]) {
   localStorage.setItem(WISHLIST_KEY, JSON.stringify(list));
+  window.dispatchEvent(new Event('wishlist-updated'));
 }
 
 export function addToWishlist(id: string) {
@@ -54,4 +56,8 @@ export function addToWishlist(id: string) {
   if (!list.includes(id)) {
     setWishlist([...list, id]);
   }
+}
+
+export function removeFromWishlist(id: string) {
+  setWishlist(getWishlist().filter((existingId) => existingId !== id));
 }
