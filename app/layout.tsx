@@ -40,7 +40,6 @@ export default function RootLayout({
                   <FirstOrderPopup />
                   <Footer />
                   <WhatsAppWidget />
-                  <SupportChatbot />
                 </WishlistProvider>
               </CartProvider>
             </LanguageProvider>

@@ -71,19 +71,51 @@ export default function Home() {
 
         <Reveal direction="up" distance={22} delay={150}>
           <div className="relative flex flex-col items-center">
-          <div className="relative flex aspect-square w-full max-w-[430px] items-center justify-center md:max-w-[550px] before:absolute before:h-[86%] before:w-[76%] before:rounded-[48%_48%_3%_3%] before:border before:border-gold before:opacity-70 before:content-['']">
+            <div className="relative flex aspect-square w-full max-w-[430px] items-center justify-center md:max-w-[550px]">
+
+            {/* White background behind the entire logo */}
+            <div
+              className="
+                absolute
+                h-[92%]
+                w-[88%]
+                bg-[#fffdf8]
+              "
+            />
+
+            {/* Decorative arch border */}
+            <div
+              className="
+                absolute
+                h-[86%]
+                w-[76%]
+                rounded-[48%_48%_3%_3%]
+                border
+                border-gold
+                opacity-70
+              "
+            />
+
             <Image
               src="/logo.png"
               alt="Lost Sheep Found logo with a resting lamb"
               fill
               priority
-              className="object-contain p-[35px] mix-blend-multiply md:p-[50px]"
+              className="
+                relative
+                z-10
+                object-contain
+                p-[15px]
+                mix-blend-multiply
+                md:p-[25px]
+              "
             />
+
           </div>
-          <div className="-mt-6 text-center font-display text-[17px] italic leading-[1.35]">
-            "The Lord is my shepherd."<br />
-            <span className="font-sans text-[9px] not-italic uppercase tracking-[.16em] text-gold">Psalm 23:1</span>
-          </div>
+            <div className="-mt-4 text-center font-display text-[17px] italic leading-[1.35]">
+              "The Lord is my shepherd."<br />
+              <span className="font-sans text-[9px] not-italic uppercase tracking-[.16em] text-gold">Psalm 23:1</span>
+            </div>
         </div>
         </Reveal>
       </section>
