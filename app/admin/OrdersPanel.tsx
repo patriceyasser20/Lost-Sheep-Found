@@ -21,6 +21,18 @@ function resolveSelection(value: any): Resolved {
   return { optionName: 'Option', label: String(value) };
 }
 
+// `_sku` is a reserved key inside item.customization carrying the merged
+// parent+child SKU string (see lib/sku.ts) — pulled out separately so it
+// renders as its own fulfillment badge instead of blending in with the
+// customer's normal option choices (Cover, Color, etc.).
+function splitCustomization(customization: Record<string, any> | null | undefined) {
+  if (!customization) return { sku: null as string | null, selections: [] as Resolved[] };
+  const { _sku, ...rest } = customization;
+  const sku = _sku && typeof _sku === 'object' && _sku.value ? String(_sku.value) : null;
+  const selections = Object.values(rest).map(resolveSelection);
+  return { sku, selections };
+}
+
 export default function OrdersPanel() {
   const [orders, setOrders] = useState<AdminOrder[]>([]);
   const [loading, setLoading] = useState(true);
@@ -94,9 +106,7 @@ export default function OrdersPanel() {
                     <p className="text-[13px] text-brown-soft">No items found for this order.</p>
                   ) : (
                     o.items.map((item, i) => {
-                      const selections = item.customization
-                        ? Object.values(item.customization).map(resolveSelection)
-                        : [];
+                      const { sku, selections } = splitCustomization(item.customization);
                       return (
                         <div key={i} className="flex items-start gap-4 text-[13.5px]">
                           <div className="relative h-14 w-14 flex-shrink-0 overflow-hidden border border-line bg-cream">
@@ -113,6 +123,13 @@ export default function OrdersPanel() {
                             <p className="text-brown">
                               {item.productName} × {item.quantity}
                             </p>
+
+                            {sku && (
+                              <span className="mt-1.5 inline-block border border-gold bg-cream px-2 py-0.5 font-mono text-[11px] tracking-tight text-brown">
+                                SKU: {sku}
+                              </span>
+                            )}
+
                             {selections.length > 0 && (
                               <div className="mt-2 space-y-1.5">
                                 {selections.map((s, j) => (

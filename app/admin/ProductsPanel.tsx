@@ -59,7 +59,7 @@ function CustomizationEditor({
 
   function addChoice(optId: string) {
     const opt = options.find((o) => o.id === optId)!;
-    const choice: OptionChoice = { id: `choice-${Date.now()}`, label: '', swatch: '#a1792f' };
+    const choice: OptionChoice = { id: `choice-${Date.now()}`, label: '', swatch: '#a1792f', sku: '' };
     update(optId, { options: [...opt.options, choice] });
   }
 
@@ -162,58 +162,71 @@ function CustomizationEditor({
                   const choiceKey = c.id || `choice-${i}`;
                   const isUploading = uploadingChoiceId === choiceKey;
                   return (
-                    <div key={choiceKey} className="flex items-center gap-3">
-                      <label
-                        className="relative flex h-16 w-16 flex-shrink-0 cursor-pointer items-center justify-center overflow-hidden border border-line bg-paper-light"
-                        title={c.image ? 'Change picture' : 'Add picture'}
-                      >
-                        {c.image ? (
-                          <Image src={c.image} alt={c.label || 'choice'} fill className="object-cover" />
-                        ) : isUploading ? (
-                          <span className="text-[10px] text-brown-soft">…</span>
-                        ) : (
-                          <ImagePlus size={20} className="text-brown-soft" />
-                        )}
-                        <input
-                          type="file"
-                          accept="image/*"
-                          className="hidden"
-                          onChange={(e) => {
-                            const file = e.target.files?.[0];
-                            if (file) uploadChoiceImage(opt.id, c.id, file);
-                          }}
-                        />
-                      </label>
-
-                      <input
-                        type="color"
-                        value={c.swatch || '#a1792f'}
-                        onChange={(e) => updateChoice(opt.id, c.id, { swatch: e.target.value })}
-                        className="h-6 w-6 flex-shrink-0 border border-line p-0"
-                        title="Fallback color (used if no picture is set)"
-                      />
-
-                      <input
-                        type="text"
-                        placeholder="Choice label (e.g. Gold Foil)"
-                        value={c.label}
-                        onChange={(e) => updateChoice(opt.id, c.id, { label: e.target.value })}
-                        className="flex-1 border border-line bg-cream px-3 py-1.5 text-sm text-brown outline-none focus:border-gold"
-                      />
-
-                      {c.image && (
-                        <button
-                          onClick={() => updateChoice(opt.id, c.id, { image: undefined })}
-                          className="text-[10px] uppercase tracking-[.06em] text-brown-soft transition hover:text-brown"
-                          title="Remove picture, keep color"
+                    <div key={choiceKey} className="border border-line/60 bg-paper-light/40 p-2.5">
+                      <div className="flex items-center gap-3">
+                        <label
+                          className="relative flex h-16 w-16 flex-shrink-0 cursor-pointer items-center justify-center overflow-hidden border border-line bg-paper-light"
+                          title={c.image ? 'Change picture' : 'Add picture'}
                         >
-                          Clear pic
-                        </button>
-                      )}
+                          {c.image ? (
+                            <Image src={c.image} alt={c.label || 'choice'} fill className="object-cover" />
+                          ) : isUploading ? (
+                            <span className="text-[10px] text-brown-soft">…</span>
+                          ) : (
+                            <ImagePlus size={20} className="text-brown-soft" />
+                          )}
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (file) uploadChoiceImage(opt.id, c.id, file);
+                            }}
+                          />
+                        </label>
 
-                      <button onClick={() => removeChoice(opt.id, c.id)} className="text-brown-soft transition hover:text-[#a14b3c]" aria-label="Remove choice">
-                        <X size={14} />
-                      </button>
+                        <input
+                          type="color"
+                          value={c.swatch || '#a1792f'}
+                          onChange={(e) => updateChoice(opt.id, c.id, { swatch: e.target.value })}
+                          className="h-6 w-6 flex-shrink-0 border border-line p-0"
+                          title="Fallback color (used if no picture is set)"
+                        />
+
+                        <input
+                          type="text"
+                          placeholder="Choice label (e.g. Gold Foil)"
+                          value={c.label}
+                          onChange={(e) => updateChoice(opt.id, c.id, { label: e.target.value })}
+                          className="flex-1 border border-line bg-cream px-3 py-1.5 text-sm text-brown outline-none focus:border-gold"
+                        />
+
+                        {c.image && (
+                          <button
+                            onClick={() => updateChoice(opt.id, c.id, { image: undefined })}
+                            className="text-[10px] uppercase tracking-[.06em] text-brown-soft transition hover:text-brown"
+                            title="Remove picture, keep color"
+                          >
+                            Clear pic
+                          </button>
+                        )}
+
+                        <button onClick={() => removeChoice(opt.id, c.id)} className="text-brown-soft transition hover:text-[#a14b3c]" aria-label="Remove choice">
+                          <X size={14} />
+                        </button>
+                      </div>
+
+                      {/* Child SKU — one per choice (e.g. LSF-JRN-001-LINEN), sits under the parent product SKU */}
+                      <div className="mt-2 pl-[76px]">
+                        <input
+                          type="text"
+                          placeholder="Child SKU (e.g. LSF-JRN-001-LINEN)"
+                          value={c.sku || ''}
+                          onChange={(e) => updateChoice(opt.id, c.id, { sku: e.target.value.toUpperCase() })}
+                          className="w-full max-w-xs border border-line bg-cream px-2.5 py-1.5 text-[12px] text-brown outline-none focus:border-gold"
+                        />
+                      </div>
                     </div>
                   );
                 })}
@@ -345,7 +358,7 @@ export default function ProductsPanel() {
   const [showForm, setShowForm] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [imageItems, setImageItems] = useState<ImageItem[]>([]);
-  const [form, setForm] = useState({ name: '', price: '', description: '', categoryId: '', isCustomizable: false });
+  const [form, setForm] = useState({ name: '', sku: '', price: '', description: '', categoryId: '', isCustomizable: false });
   const [customOptions, setCustomOptions] = useState<CustomizationOption[]>([]);
   const [saving, setSaving] = useState(false);
 
@@ -389,7 +402,7 @@ export default function ProductsPanel() {
 
   function openAddForm() {
     setEditingProduct(null);
-    setForm({ name: '', price: '', description: '', categoryId: '', isCustomizable: false });
+    setForm({ name: '', sku: '', price: '', description: '', categoryId: '', isCustomizable: false });
     setCustomOptions([]);
     setImageItems([]);
     setShowForm(true);
@@ -405,6 +418,9 @@ export default function ProductsPanel() {
     setEditingProduct(p);
     setForm({
       name: p.name,
+      // `sku` is an assumed new field on Product — falls back to an empty
+      // string for existing products that don't have one set yet.
+      sku: (p as any).sku || '',
       price: String(p.price),
       description: p.description,
       categoryId: matchedCategory?.id || '',
@@ -449,6 +465,7 @@ export default function ProductsPanel() {
         options: (row.options || []).map((c: any, i: number) => ({
           ...c,
           id: c.id || `choice-${row.id}-${i}`,
+          sku: c.sku || '',
         })),
         sort_order: row.sort_order,
       }))
@@ -532,13 +549,14 @@ export default function ProductsPanel() {
 
         const slug = form.name.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
         const payload = {
-        name: form.name,
-        slug,
-        price: Number(form.price),
-        description: form.description,
-        category_id: form.categoryId,
-        is_customizable: form.isCustomizable,
-        image_url: images[0], // thumbnail column on `products` — this one IS a real column
+          name: form.name,
+          slug,
+          sku: form.sku.trim().toUpperCase() || null,
+          price: Number(form.price),
+          description: form.description,
+          category_id: form.categoryId,
+          is_customizable: form.isCustomizable,
+          image_url: images[0],
         };
 
         let productId = editingProduct?.id;
@@ -553,9 +571,13 @@ export default function ProductsPanel() {
         await adminApi.saveProductImages(productId!, images);
 
         if (form.isCustomizable && customOptions.length > 0) {
-        await adminApi.saveCustomizationOptions(productId!, customOptions);
+          const normalizedOptions = customOptions.map((opt) => ({
+            ...opt,
+            options: opt.options.map((c) => ({ ...c, sku: (c.sku || '').toUpperCase() })),
+          }));
+          await adminApi.saveCustomizationOptions(productId!, normalizedOptions);
         } else {
-        await adminApi.deleteCustomizationOptionsForProduct(productId!);
+          await adminApi.deleteCustomizationOptionsForProduct(productId!);
         }
 
         setShowForm(false);
@@ -614,6 +636,20 @@ export default function ProductsPanel() {
                 onChange={(e) => setForm({ ...form, name: e.target.value })}
                 className={inputBase}
               />
+            </div>
+
+            <div>
+              <label className={labelBase}>Parent SKU</label>
+              <input
+                type="text"
+                placeholder="e.g. LSF-JRN-001"
+                value={form.sku}
+                onChange={(e) => setForm({ ...form, sku: e.target.value.toUpperCase() })}
+                className={inputBase}
+              />
+              <p className="mt-1.5 text-[11px] text-brown-soft/70">
+                Identifies this product overall. Each customization choice below can carry its own child SKU under this one.
+              </p>
             </div>
 
             <div>

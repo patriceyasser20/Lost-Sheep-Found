@@ -51,8 +51,8 @@ export default function Header() {
 
         <nav className="mx-auto hidden gap-[34px] md:flex" aria-label="Main navigation">
           <Link href="/shop" className="text-xs tracking-[.1em] uppercase text-brown-soft hover:text-brown">{t('nav.shop')}</Link>
-          <Link href="/collection/bible-journals" className="text-xs tracking-[.1em] uppercase text-brown-soft hover:text-brown">{t('nav.journals')}</Link>
           <Link href="/bible" className="text-xs tracking-[.1em] uppercase text-brown-soft hover:text-brown">Read Bible</Link>
+          <Link href="/return-exchange" className="text-xs tracking-[.1em] uppercase text-brown-soft hover:text-brown">{t('nav.return&exchange')}</Link>
           <Link href="/our-story" className="text-xs tracking-[.1em] uppercase text-brown-soft hover:text-brown">{t('nav.ourStory')}</Link>
         </nav>
 

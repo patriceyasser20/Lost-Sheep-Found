@@ -15,10 +15,11 @@ export type Product = {
   customizable: boolean;
   featured: boolean;
   stock: number;
+  sku?: string;
 };
 
 export const PRODUCT_SELECT = `
-  id, slug, name, description, price, image_url, is_customizable, is_featured, stock,
+  id, slug, name, description, price, image_url, is_customizable, is_featured, stock, sku,
   categories ( name, slug ),
   product_images ( image_url, sort_order )
 `;
@@ -43,6 +44,7 @@ export function mapProduct(row: any): Product {
     customizable: row.is_customizable,
     featured: row.is_featured,
     stock: row.stock,
+    sku: row.sku || undefined,
   };
 }
 

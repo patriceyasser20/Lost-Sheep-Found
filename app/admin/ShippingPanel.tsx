@@ -11,6 +11,7 @@ export default function ShippingPanel() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [savingId, setSavingId] = useState<string | null>(null);
+  const [bulkSaving, setBulkSaving] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -60,15 +61,27 @@ export default function ShippingPanel() {
     }
   }
 
-  async function markAllFree() {
-    const updated = rates.map((r) => ({ ...r, freeShipping: true }));
+  // Shared by both directions of the toggle: flips freeShipping on every
+  // row to `nextFreeShipping`, optimistically updates the table, then
+  // persists each row. Restoring never touches `fee` — each city's fee
+  // stays exactly as it was, since toggleFreeShipping never clears it.
+  async function applyToAll(nextFreeShipping: boolean) {
+    const updated = rates.map((r) => ({ ...r, freeShipping: nextFreeShipping }));
     setRates(updated);
+    setBulkSaving(true);
     try {
-      await Promise.all(updated.map((r) => adminApi.upsertShippingCity({ ...r, country_code: COUNTRY_CODE })));
+      const saved = await Promise.all(
+        updated.map((r) => adminApi.upsertShippingCity({ ...r, country_code: COUNTRY_CODE }))
+      );
+      setRates(saved);
     } catch (e: any) {
       alert(`Some cities failed to save: ${e.message || 'unknown error'}`);
+    } finally {
+      setBulkSaving(false);
     }
   }
+
+  const allFree = rates.length > 0 && rates.every((r) => r.freeShipping);
 
   if (loading) return <p className="text-sm text-brown-soft">Loading shipping rates…</p>;
   if (error) return <p className="text-sm text-red-700">Couldn't load shipping rates: {error}</p>;
@@ -78,8 +91,12 @@ export default function ShippingPanel() {
       <div className="mb-5 flex items-center justify-between">
         <h3 className="text-lg font-medium">Shipping rates — Egypt</h3>
         <div className="flex gap-2">
-          <button onClick={markAllFree} className="border border-gold px-4 py-2 text-[11px] uppercase tracking-[.08em] text-gold hover:bg-gold hover:text-cream">
-            Make all free shipping
+          <button
+            onClick={() => applyToAll(!allFree)}
+            disabled={bulkSaving || rates.length === 0}
+            className="border border-gold px-4 py-2 text-[11px] uppercase tracking-[.08em] text-gold transition hover:bg-gold hover:text-cream disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {bulkSaving ? 'Saving…' : allFree ? 'Restore delivery fees' : 'Make all free shipping'}
           </button>
           <button onClick={addCity} className="border border-brown px-4 py-2 text-[11px] uppercase tracking-[.08em] text-brown hover:bg-brown hover:text-cream">
             Add city

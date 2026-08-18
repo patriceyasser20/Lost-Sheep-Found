@@ -6,7 +6,8 @@ export type OptionChoice = {
   id: string;
   label: string;
   swatch?: string;
-  image?: string; 
+  image?: string;
+  sku?: string;
 };
 
 export type CustomizationOption = {

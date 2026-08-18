@@ -66,6 +66,7 @@ export default async function ChapterPage({
             bookHref={`/bible/${testament}`}
             chapterNum={chapterNum}
             totalChapters={book.chapters}
+            chapterKey={`${testament}:${bookSlug}:${chapterNum}`}
             prevChapter={prevChapter}
             nextChapter={nextChapter}
           />

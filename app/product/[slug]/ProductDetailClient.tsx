@@ -1,11 +1,12 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import ProductCustomizer, { type Selections } from '../../components/ProductCustomizer';
 import Link from 'next/link';
 import { ArrowRight, Heart, ShoppingBag } from 'lucide-react';
 import ProductCard from '../../components/ProductCard';
 import VerseBlock from '../../components/VerseBlock';
 import type { Product } from '../../../lib/products';
+import { mergeChildSkus } from '../../../lib/sku';
 import { useRouter } from 'next/navigation';
 import { useCart } from '../../context/CartContext';
 import { getWishlist, setWishlist as persistWishlist } from '../../../lib/localCart';
@@ -35,9 +36,28 @@ export default function ProductDetailClient({
 
   const router = useRouter();
 
+  // Recomputes live as the customer picks options — combines the product's
+  // own SKU with the child SKU of whichever choices are currently selected.
+  // Relies on ProductCustomizer including `sku` on each selection it emits;
+  // if it doesn't yet, this quietly falls back to just the parent SKU (or
+  // null if there isn't one either) rather than showing something wrong.
+  const combinedSku = useMemo(
+    () => mergeChildSkus(product.sku, customSelections as any),
+    [product.sku, customSelections]
+  );
+
   function handleAddToCart() {
     if (addDisabled || outOfStock) return;
-    addToCart(product.id, 1, customSelections);
+
+    // Carry the merged SKU along inside the same customization blob that
+    // already flows to the cart, checkout, orders, and account pages — no
+    // schema change needed, it just rides along as one more entry, the
+    // same way each individual option selection already does.
+    const selectionsToSave = combinedSku
+      ? { ...customSelections, _sku: { optionName: 'SKU', value: combinedSku } }
+      : customSelections;
+
+    addToCart(product.id, 1, selectionsToSave);
     router.push('/cart');
   }
 
@@ -119,6 +139,12 @@ export default function ProductDetailClient({
                   setCustomComplete(complete);
                 }}
               />
+          )}
+
+          {combinedSku && (
+            <p className="mb-6 text-[11px] uppercase tracking-[.1em] text-brown-soft">
+              SKU: <span className="font-mono normal-case tracking-normal text-brown">{combinedSku}</span>
+            </p>
           )}
 
           <div className="mb-9 flex gap-[14px]">

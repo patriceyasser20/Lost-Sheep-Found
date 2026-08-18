@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { getCustomizationOptionsClient, type CustomizationOption, type OptionChoice } from '../../lib/customization';
 
-export type Selections = Record<string, { optionName: string; value: string; swatch?: string; image?: string }>;
+export type Selections = Record<string, { optionName: string; value: string; swatch?: string; image?: string; sku?: string }>;
 
 export default function ProductCustomizer({
   productId,
@@ -37,7 +37,13 @@ export default function ProductCustomizer({
   function choose(opt: CustomizationOption, choice: OptionChoice) {
     commit({
       ...selections,
-      [opt.id]: { optionName: opt.name, value: choice.label, swatch: choice.swatch, image: choice.image },
+      [opt.id]: {
+        optionName: opt.name,
+        value: choice.label,
+        swatch: choice.swatch,
+        image: choice.image,
+        sku: choice.sku,
+      },
     });
   }
 

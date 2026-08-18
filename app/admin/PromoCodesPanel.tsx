@@ -132,20 +132,6 @@ export default function PromoCodesPanel() {
           />
         </div>
 
-        <div>
-          <label className="mb-2 block text-[10px] uppercase tracking-[.12em] text-brown-soft">
-            Free delivery
-          </label>
-          <label className="flex h-[42px] items-center gap-2 border border-line bg-cream px-3 text-sm">
-            <input
-              type="checkbox"
-              checked={form.freeDelivery}
-              onChange={(e) => setForm({ ...form, freeDelivery: e.target.checked })}
-              className="accent-brown"
-            />
-            Waive shipping
-          </label>
-        </div>
 
         <div className="flex items-end">
           <button
