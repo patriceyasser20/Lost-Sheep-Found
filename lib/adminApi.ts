@@ -1,4 +1,4 @@
-import type { PromoCode, Offer, AdminOrder, AdminOrderItem, OrderStatus } from './adminTypes';
+import type { PromoCode, Offer, AdminOrder, AdminOrderItem, OrderStatus,SaleSettings } from './adminTypes';
 
 const ADMIN_ENDPOINT = '/api/admin-ops';
 
@@ -29,9 +29,10 @@ function mapOrder(row: any): AdminOrder {
     imageUrl: it.products?.image_url || null,
     quantity: it.quantity,
     unitPrice: Number(it.unit_price) || 0,
+    originalPrice: it.original_price != null ? Number(it.original_price) : null,
+    discountPercentage: Number(it.discount_percentage) || 0,
     customization: it.customization && typeof it.customization === 'object' ? it.customization : null,
   }));
-
   return {
     id: row.id,
     customerName,
@@ -71,6 +72,7 @@ function mapOffer(row: any): Offer {
     active: row.active,
   };
 }
+
 
 async function call(action: string, payload: any = {}) {
   const res = await fetch(ADMIN_ENDPOINT, {
@@ -178,4 +180,31 @@ async function call(action: string, payload: any = {}) {
   // newsletter
   getSubscribers: () => call('get-subscribers'),
   sendNewsletter: (payload: any) => call('send-newsletter', payload),
+
+   async getSaleSettings(): Promise<SaleSettings> {
+    const data = await call('get-sale-settings');
+    return {
+      title: data?.title ?? '15% off, this week only',
+      subtitle: data?.subtitle ?? 'Use code ADVENT15 at checkout on any journal or wood verse piece.',
+      categorySlugs: data?.category_slugs ?? [],
+      discountPct: Number(data?.discount_pct) || 0,
+      active: data?.active ?? true,
+    };
+  },
+  async updateSaleSettings(payload: SaleSettings) {
+    const data = await call('update-sale-settings', {
+      title: payload.title,
+      subtitle: payload.subtitle,
+      category_slugs: payload.categorySlugs,
+      discount_pct: payload.discountPct,
+      active: payload.active,
+    });
+    return {
+      title: data.title,
+      subtitle: data.subtitle,
+      categorySlugs: data.category_slugs ?? [],
+      discountPct: Number(data.discount_pct) || 0,
+      active: data.active ?? true,
+    } as SaleSettings;
+  },
 };

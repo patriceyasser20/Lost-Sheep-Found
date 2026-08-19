@@ -54,13 +54,13 @@ export async function getActiveOffersClient(): Promise<Offer[]> {
 // resolvable today; 'collection' is skipped because Product has no
 // collection field yet (see note above).
 export function findOfferForProduct(
-  product: Pick<Product, 'id' | 'categorySlug'>,
+  product: Pick<Product, 'id' | 'categoryId'>,
   offers: Offer[]
 ): Offer | null {
   for (const offer of offers) {
     if (offer.appliesTo === 'all') return offer;
     if (offer.appliesTo === 'product' && offer.targetId === product.id) return offer;
-    if (offer.appliesTo === 'category' && offer.targetId === product.categorySlug) return offer;
+    if (offer.appliesTo === 'category' && offer.targetId === product.categoryId) return offer;
   }
   return null;
 }
@@ -69,4 +69,13 @@ export function offerBadgeText(offer: Offer): string {
   return offer.offerType === 'buy_x_get_y_free'
     ? `Buy ${offer.buyQty} Get ${offer.getQty} Free`
     : `Buy ${offer.buyQty} Get ${offer.getQty} at -${offer.discountPct}%`;
+}
+export function findSaleOfferForProduct(
+  product: Pick<Product, 'id' | 'categoryId'>,
+  offers: Offer[]
+): Offer | null {
+  return findOfferForProduct(
+    product,
+    offers.filter((o) => o.offerType === 'percent_off')
+  );
 }

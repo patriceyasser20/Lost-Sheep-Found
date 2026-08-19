@@ -7,6 +7,8 @@ import { useAuth } from '../context/AuthContext';
 import { useTranslation } from '../context/LanguageContext';
 import { useCart } from '../context/CartContext';
 import { getWishlist } from '../../lib/localCart';
+import { getActiveOffersClient, type Offer } from '../../lib/offers';
+import { getActiveSaleClient } from '../../lib/sale';
 
 export default function Header() {
   const { user, signOut } = useAuth();
@@ -15,6 +17,8 @@ export default function Header() {
   const [wishlistIds, setWishlistIds] = useState<string[]>([]);
   const [menuOpen, setMenuOpen] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
+  const [offers, setOffers] = useState<Offer[]>([]);
+  const [saleActive, setSaleActive] = useState(false);
 
   useEffect(() => {
     setWishlistIds(getWishlist()); // initial read on mount
@@ -31,7 +35,14 @@ export default function Header() {
     };
   }, []);
 
+  useEffect(() => {
+    getActiveOffersClient().then(setOffers);
+    getActiveSaleClient().then((sale) => setSaleActive(!!sale));
+  }, []);
+
   const hasWishlistItems = wishlistIds.length > 0;
+  const hasSale = saleActive;
+  const hasOffer = offers.length > 0;
 
   return (
     <header className="sticky top-0 z-20 h-[68px] md:h-[78px] border-b border-brown/[.12] bg-paper/[.88] backdrop-blur-md">
@@ -52,8 +63,18 @@ export default function Header() {
         <nav className="mx-auto hidden gap-[34px] md:flex" aria-label="Main navigation">
           <Link href="/shop" className="text-xs tracking-[.1em] uppercase text-brown-soft hover:text-brown">{t('nav.shop')}</Link>
           <Link href="/bible" className="text-xs tracking-[.1em] uppercase text-brown-soft hover:text-brown">Read Bible</Link>
-          <Link href="/return-exchange" className="text-xs tracking-[.1em] uppercase text-brown-soft hover:text-brown">{t('nav.return&exchange')}</Link>
-          <Link href="/our-story" className="text-xs tracking-[.1em] uppercase text-brown-soft hover:text-brown">{t('nav.ourStory')}</Link>
+
+          {hasSale ? (
+            <Link href="/sale" className="text-xs tracking-[.1em] uppercase text-brown-soft hover:text-brown">Sale</Link>
+          ) : (
+            <Link href="/return-exchange" className="text-xs tracking-[.1em] uppercase text-brown-soft hover:text-brown">{t('nav.return&exchange')}</Link>
+          )}
+
+          {hasOffer ? (
+            <Link href="/offers" className="text-xs tracking-[.1em] uppercase text-brown-soft hover:text-brown">Offers</Link>
+          ) : (
+            <Link href="/our-story" className="text-xs tracking-[.1em] uppercase text-brown-soft hover:text-brown">{t('nav.ourStory')}</Link>
+          )}
         </nav>
 
         <div className="flex items-center gap-[22px]">
@@ -134,7 +155,14 @@ export default function Header() {
           <Link href="/shop" onClick={() => setMenuOpen(false)} className="text-xs tracking-[.1em] uppercase text-brown-soft hover:text-brown">{t('nav.shop')}</Link>
           <Link href="/collection/bible-journals" onClick={() => setMenuOpen(false)} className="text-xs tracking-[.1em] uppercase text-brown-soft hover:text-brown">{t('nav.journals')}</Link>
           <Link href="/collection/wood-blocks" onClick={() => setMenuOpen(false)} className="text-xs tracking-[.1em] uppercase text-brown-soft hover:text-brown">{t('nav.woodVerses')}</Link>
-          <Link href="/our-story" onClick={() => setMenuOpen(false)} className="text-xs tracking-[.1em] uppercase text-brown-soft hover:text-brown">{t('nav.ourStory')}</Link>
+          {hasSale ? (
+            <Link href="/sale" onClick={() => setMenuOpen(false)} className="text-xs tracking-[.1em] uppercase text-brown-soft hover:text-brown">Sale</Link>
+          ) : null}
+          {hasOffer ? (
+            <Link href="/offers" onClick={() => setMenuOpen(false)} className="text-xs tracking-[.1em] uppercase text-brown-soft hover:text-brown">Offers</Link>
+          ) : (
+            <Link href="/our-story" onClick={() => setMenuOpen(false)} className="text-xs tracking-[.1em] uppercase text-brown-soft hover:text-brown">{t('nav.ourStory')}</Link>
+          )}
         </nav>
       )}
     </header>

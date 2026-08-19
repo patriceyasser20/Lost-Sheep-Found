@@ -25,6 +25,29 @@ const inputBase =
   'w-full border border-line bg-cream px-4 py-3 text-sm text-brown outline-none transition placeholder:text-brown-soft/60 focus:border-gold';
 const labelBase = 'mb-2 block text-[10px] uppercase tracking-[.12em] text-brown-soft';
 
+// ---------- Shared: upload a file through the server-side admin route ----------
+// Uploads must go through /api/admin-upload (service-role, x-admin-token
+// gated) rather than supabaseClient.storage directly — the anon client has
+// no real Supabase Auth session behind it in this app (admin access is a
+// custom localStorage token, not Supabase Auth), so Storage RLS correctly
+// rejects direct anon uploads.
+async function uploadViaAdminRoute(file: File, path: string, bucket = 'product-images'): Promise<string> {
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('path', path);
+  formData.append('bucket', bucket);
+
+  const res = await fetch('/api/admin-upload', {
+    method: 'POST',
+    headers: { 'x-admin-token': localStorage.getItem('adminToken') || '' },
+    body: formData,
+  });
+
+  const json = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(json.error || 'Image upload failed.');
+  return json.data.publicUrl;
+}
+
 // ---------- Customization builder ----------
 function CustomizationEditor({
   options,
@@ -80,15 +103,8 @@ function CustomizationEditor({
     try {
       const ext = file.name.split('.').pop();
       const path = `choices/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
-
-      const { error: uploadError } = await supabaseClient.storage
-        .from('product-images')
-        .upload(path, file, { cacheControl: '3600', upsert: false });
-
-      if (uploadError) throw new Error(uploadError.message);
-
-      const { data } = supabaseClient.storage.from('product-images').getPublicUrl(path);
-      updateChoice(optId, choiceId, { image: data.publicUrl });
+      const publicUrl = await uploadViaAdminRoute(file, path);
+      updateChoice(optId, choiceId, { image: publicUrl });
     } catch (err: any) {
       alert('Failed to upload image: ' + err.message);
     }
@@ -502,15 +518,7 @@ export default function ProductsPanel() {
   async function uploadProductImage(file: File): Promise<string> {
     const ext = file.name.split('.').pop();
     const path = `products/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
-
-    const { error: uploadError } = await supabaseClient.storage
-      .from('product-images') // <-- swap in your real bucket name if different
-      .upload(path, file, { cacheControl: '3600', upsert: false });
-
-    if (uploadError) throw new Error(`Image upload failed: ${uploadError.message}`);
-
-    const { data } = supabaseClient.storage.from('product-images').getPublicUrl(path);
-    return data.publicUrl;
+    return uploadViaAdminRoute(file, path);
   }
 
   async function deleteProduct(p: Product) {

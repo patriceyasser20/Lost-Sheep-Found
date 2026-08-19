@@ -213,30 +213,59 @@ const handlers: Record<string, (payload: any) => Promise<any>> = {
   unwrap(db.from('offers').select('*').order('created_at', { ascending: false })),
 
   'get-orders': async () =>
-    unwrap(
-      db
-        .from('orders')
-        .select(`
-          id,
-          created_at,
-          status,
-          subtotal,
-          delivery_fee,
-          discount,
-          total,
-          city,
-          user_id,
-          shipping_address,
-          order_items (
-            quantity,
-            unit_price,
-            customization,
-            products ( name, image_url )
-          )
-        `)
-        .order('created_at', { ascending: false })
-    ),
+  unwrap(
+    db
+      .from('orders')
+      .select(`
+        id,
+        created_at,
+        status,
+        subtotal,
+        delivery_fee,
+        discount,
+        total,
+        city,
+        user_id,
+        shipping_address,
+        order_items (
+          quantity,
+          unit_price,
+          original_price,
+          discount_percentage,
+          customization,
+          products ( name, image_url )
+        )
+      `)
+      .order('created_at', { ascending: false })
+  ),
+      'get-sale-settings': async () => {
+    const { data, error } = await supabaseAdmin()
+      .from('sale_settings')
+      .select('*')
+      .eq('id', 'default')
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    return data;
+  },
 
+  'update-sale-settings': async (payload) => {
+    const { data, error } = await supabaseAdmin()
+      .from('sale_settings')
+      .upsert(
+        {
+          id: 'default',
+          title: payload.title,
+          subtitle: payload.subtitle,
+          category_slugs: payload.category_slugs,
+          active: payload.active,   // ← this was missing
+        },
+        { onConflict: 'id' }
+      )
+      .select()
+      .single();
+    if (error) throw new Error(error.message);
+    return data;
+  },
 
 };
 

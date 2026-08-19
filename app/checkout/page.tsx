@@ -9,8 +9,12 @@ import { getProductsClient, type Product } from '../../lib/products';
 import { getCart, type CartLine } from '../../lib/localCart';
 import { useAuth } from '../context/AuthContext';
 import { getShippingCitiesClient, type ShippingCity } from '../../lib/shipping';
+import { getActiveOffersClient, type Offer } from '../../lib/offers';
+import { getActiveSaleClient, type SaleSettings } from '../../lib/sale';
+import { computeOfferDiscounts } from '../../lib/offerPricing';
 import VerseBlock from '../components/VerseBlock';
 import { useCart } from '../context/CartContext';
+import { getEffectivePrice } from '../../lib/pricing';
 
 type PaymentMethod = 'paymob' | 'cod';
 
@@ -21,31 +25,27 @@ export default function CheckoutPage() {
   const { clearCart } = useCart();
 
   const [products, setProducts] = useState<Product[]>([]);
+  const [offers, setOffers] = useState<Offer[]>([]);
+  const [sale, setSale] = useState<SaleSettings | null>(null);
   const [cart, setCart] = useState<CartLine[]>([]);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('paymob');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  // Contact & shipping fields, controlled so we can pre-fill and re-use on submit
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [address, setAddress] = useState('');
-  
 
-  // Governorate — driven by whatever the admin has entered in the shipping panel
   const [cities, setCities] = useState<ShippingCity[]>([]);
   const [selectedCityId, setSelectedCityId] = useState('');
   const selectedCity = cities.find((c) => c.id === selectedCityId);
 
-  // Promo code
   const [promoCodeInput, setPromoCodeInput] = useState('');
   const [appliedPromo, setAppliedPromo] = useState<{ code: string; discount: number } | null>(null);
   const [promoError, setPromoError] = useState('');
 
-  // First-order welcome discount — auto-applied for logged-in accounts with
-  // zero prior orders. Guests aren't eligible (nothing to check against).
   const FIRST_ORDER_DISCOUNT_PCT = 5;
   const [isFirstOrder, setIsFirstOrder] = useState(false);
   const shipping = selectedCity ? selectedCity.fee : 0;
@@ -54,9 +54,10 @@ export default function CheckoutPage() {
     setCart(getCart());
     getProductsClient().then(setProducts);
     getShippingCitiesClient().then(setCities);
+    getActiveOffersClient().then(setOffers);
+    getActiveSaleClient().then(setSale);
   }, []);
 
-  // Pre-fill contact info + check first-order eligibility once we know who's logged in
   useEffect(() => {
     if (!user) return;
     if (user.email) setEmail(user.email);
@@ -75,12 +76,21 @@ export default function CheckoutPage() {
     .map((line) => ({ line, product: products.find((p) => p.id === line.id) }))
     .filter((l) => l.product);
 
-  const subtotal = lines.reduce((sum, l) => sum + l.product!.price * l.line.qty, 0);
-  
+  const subtotal = lines.reduce((sum, l) => {
+    const { finalPrice } = getEffectivePrice(l.product!, sale);
+    return sum + finalPrice * l.line.qty;
+  }, 0);
+
+  const appliedOffers = computeOfferDiscounts(
+    lines as any,
+    offers,
+    (p) => getEffectivePrice(p, sale).finalPrice
+  );
+  const offerDiscount = appliedOffers.reduce((sum, o) => sum + o.discountAmount, 0);
 
   const promoDiscount = appliedPromo ? Math.round((subtotal * appliedPromo.discount) / 100) : 0;
   const firstOrderDiscount = isFirstOrder ? Math.round((subtotal * FIRST_ORDER_DISCOUNT_PCT) / 100) : 0;
-  const total = Math.max(0, subtotal - promoDiscount - firstOrderDiscount) + shipping;
+  const total = Math.max(0, subtotal - promoDiscount - firstOrderDiscount - offerDiscount) + shipping;
 
   async function applyPromoCode() {
     if (!promoCodeInput.trim()) return;
@@ -117,9 +127,6 @@ export default function CheckoutPage() {
     setLoading(true);
 
     try {
-      // Re-verify first-order eligibility right before charging rather than
-      // trusting the state computed on page load, in case an order was
-      // placed in another tab in the meantime.
       let verifiedFirstOrderDiscount = 0;
       if (user?.id) {
         const { count } = await supabase
@@ -131,14 +138,11 @@ export default function CheckoutPage() {
         }
       }
 
-      const totalDiscount = Math.min(promoDiscount + verifiedFirstOrderDiscount, subtotal);
+      const totalDiscount = Math.min(promoDiscount + verifiedFirstOrderDiscount + offerDiscount, subtotal);
       const orderEmail = user?.email || email;
       const status = paymentMethod === 'cod' ? 'succeeded' : 'pending';
       const governorateName = selectedCity!.city;
 
-      // NOTE: adjust these column names if your `orders`/`order_items` schema differs —
-      // I haven't seen your current schema, so this mirrors the shape from your
-      // previous full checkout implementation as closely as possible.
       const { data: order, error: orderError } = await supabase
         .from('orders')
         .insert({
@@ -158,6 +162,10 @@ export default function CheckoutPage() {
             street: address,
             payment_method: paymentMethod === 'cod' ? 'Cash on Delivery' : 'Credit / Debit Card',
             promo_code: appliedPromo?.code || null,
+            applied_offers: appliedOffers.map((o) => ({
+              name: o.offer.title,
+              discount: o.discountAmount,
+            })),
           },
         })
         .select()
@@ -165,13 +173,18 @@ export default function CheckoutPage() {
 
       if (orderError || !order) throw new Error(orderError?.message || 'Failed to create order.');
 
-      const orderItemsData = lines.map(({ line, product }) => ({
-        order_id: order.id,
-        product_id: product!.id,
-        quantity: line.qty,
-        unit_price: product!.price,
-        customization: line.selections || null,
-      }));
+      const orderItemsData = lines.map(({ line, product }) => {
+        const { discount, finalPrice } = getEffectivePrice(product!, sale);
+        return {
+          order_id: order.id,
+          product_id: product!.id,
+          quantity: line.qty,
+          unit_price: finalPrice,
+          original_price: product!.price,
+          discount_percentage: discount,
+          customization: line.selections || null,
+        };
+      });
       const { error: itemsError } = await supabase.from('order_items').insert(orderItemsData);
       if (itemsError) console.error('Failed to insert order items:', itemsError);
 
@@ -183,7 +196,12 @@ export default function CheckoutPage() {
 
       const { iframeUrl } = await createPaymobPayment(
         total,
-        lines.map((l) => ({ id: l.product!.id, name: l.product!.name, price: l.product!.price, quantity: l.line.qty })),
+        lines.map((l) => ({
+          id: l.product!.id,
+          name: l.product!.name,
+          price: getEffectivePrice(l.product!, sale).finalPrice,
+          quantity: l.line.qty,
+        })),
         order.id,
         { firstName, lastName, email, phone, street: address, city: governorateName },
         appliedPromo?.code,
@@ -275,12 +293,18 @@ export default function CheckoutPage() {
         <aside className="static border border-line bg-paper-light px-[30px] py-[34px] md:sticky md:top-[100px]">
           <h3 className="mb-[22px] text-xl">Order summary</h3>
           <div className="mt-[18px] flex flex-col gap-[14px] border-t border-line pt-[18px]">
-            {lines.map(({ line, product }) => (
-              <div className="flex justify-between text-[13px] text-brown-soft" key={line.lineId}>
-                <span>{product!.name} × {line.qty}</span>
-                <span className="text-brown">EGP {product!.price * line.qty}</span>
-              </div>
-            ))}
+            {lines.map(({ line, product }) => {
+              const { discount, finalPrice, onSale } = getEffectivePrice(product!, sale);
+              return (
+                <div className="flex justify-between text-[13px] text-brown-soft" key={line.lineId}>
+                  <span>
+                    {product!.name} × {line.qty}
+                    {onSale && <span className="ml-1.5 text-[#a14b3c]">(-{discount}%)</span>}
+                  </span>
+                  <span className="text-brown">EGP {finalPrice * line.qty}</span>
+                </div>
+              );
+            })}
           </div>
 
           <div className="my-[18px] flex gap-2">
@@ -301,6 +325,12 @@ export default function CheckoutPage() {
           )}
 
           <div className="mt-4 flex justify-between border-b border-line py-[11px] text-[13.5px] text-brown-soft"><span>Subtotal</span><span className="text-brown">EGP {subtotal}</span></div>
+          {appliedOffers.map((o) => (
+            <div key={o.offer.id} className="flex justify-between border-b border-line py-[11px] text-[13.5px] text-brown-soft">
+              <span>🏷️ {o.offer.title}</span>
+              <span className="text-brown">-EGP {o.discountAmount}</span>
+            </div>
+          ))}
           {promoDiscount > 0 && (
             <div className="flex justify-between border-b border-line py-[11px] text-[13.5px] text-brown-soft"><span>Promo discount</span><span className="text-brown">-EGP {promoDiscount}</span></div>
           )}

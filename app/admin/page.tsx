@@ -8,6 +8,7 @@ import ShippingPanel from './ShippingPanel';
 import OffersPanel from './OffersPanel';
 import SkuPanel from './SkuPanel';
 import PromoCodesPanel from './PromoCodesPanel';
+import SalePanel from './SalePanel'; 
 
 const TABS = [
   { key: 'products', label: 'Products', icon: Package },
@@ -16,6 +17,7 @@ const TABS = [
   { key: 'offers', label: 'Offers', icon: Percent },
   { key: 'sku', label: 'SKU / Stock', icon: Grid3x3 },
   { key: 'promo', label: 'Promo Codes', icon: Tag },
+  { key: 'sale', label: 'Sale Page', icon: Percent },
 ] as const;
 
 export default function AdminPage() {
@@ -55,6 +57,7 @@ export default function AdminPage() {
             {tab === 'offers' && <OffersPanel/>}
             {tab === 'sku' && <SkuPanel/>}
             {tab === 'promo' && <PromoCodesPanel/>}
+            {tab === 'sale' && <SalePanel />}
           </div>
         </div>
       </div>

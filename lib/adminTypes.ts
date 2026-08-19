@@ -4,7 +4,7 @@
 // live Supabase-backed loader yet. Swap `mock*` arrays for real fetches
 // (via adminApi or a dedicated getX() in lib/) as each panel gets wired up.
 export type OfferType = 'buy_x_get_y_free' | 'percent_off';
-export type OfferAppliesTo = 'product' | 'category' | 'collection' | 'all';
+export type OfferAppliesTo = 'product' | 'category' | 'all';
 
 
 export type Offer = {
@@ -13,7 +13,7 @@ export type Offer = {
   offerType: OfferType;
   buyQty: number;
   getQty: number;
-  discountPct: number; // used when offerType === 'percent_off'
+  discountPct: number; //  used when offerType === 'percent_off'
   appliesTo: OfferAppliesTo;
   targetId: string; // product/category/collection id — '' when appliesTo === 'all'
   targetLabel?: string; // display label for the table, resolved at save time
@@ -36,6 +36,24 @@ export type PromoCode = {
 export const mockPromoCodes: PromoCode[] = [
   { id: 'first10', code: 'FIRST10', discountPct: 10, usageLimit: 0, usedCount: 0, active: true, expiresAt: '', freeDelivery: false },
 ];
+export type SaleSettings = {
+  title: string;
+  subtitle: string;
+  categorySlugs: string[];
+  discountPct: number;
+  active: boolean;
+};
+export type SaleHistoryEntry = {
+  id: string;
+  title: string;
+  categorySlugs: string[];
+  startedAt: string;
+  endedAt: string; // '' = still running
+};
+export const mockSaleHistory: SaleHistoryEntry[] = [
+  { id: 'advent-2026', title: '15% off, this week only', categorySlugs: ['bible-journals', 'wood-blocks'], startedAt: '2026-12-01', endedAt: '2026-12-25' },
+  { id: 'summer-2026', title: 'Summer refresh — 10% off keepsakes', categorySlugs: ['keepsakes'], startedAt: '2026-06-01', endedAt: '2026-06-14' },
+];
 
 export type Sku = {
   id: string;
@@ -53,6 +71,8 @@ export type AdminOrderItem = {
   imageUrl: string | null;
   quantity: number;
   unitPrice: number;
+  originalPrice: number | null;
+  discountPercentage: number;
   customization: Record<string, any> | null;
 };
 

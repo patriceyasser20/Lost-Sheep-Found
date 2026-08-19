@@ -1,8 +1,9 @@
 import { createClient } from './supabaseServer';
 import { PRODUCT_SELECT, mapProduct, type Product } from './products';
+import { createPublicClient } from './supabaseServer';
 
 export async function getProducts(): Promise<Product[]> {
-  const supabase = await createClient();
+  const supabase = createPublicClient();
   const { data, error } = await supabase
     .from('products')
     .select(PRODUCT_SELECT)

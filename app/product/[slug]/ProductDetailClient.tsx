@@ -10,6 +10,8 @@ import { mergeChildSkus } from '../../../lib/sku';
 import { useRouter } from 'next/navigation';
 import { useCart } from '../../context/CartContext';
 import { getWishlist, setWishlist as persistWishlist } from '../../../lib/localCart';
+import { getEffectivePrice } from '../../../lib/pricing';
+import { getActiveSaleClient, type SaleSettings } from '../../../lib/sale';
 
 export default function ProductDetailClient({
   product,
@@ -22,6 +24,10 @@ export default function ProductDetailClient({
   const [customSelections, setCustomSelections] = useState<Selections>({});
   const [customComplete, setCustomComplete] = useState(!product.customizable);
   const [saved, setSaved] = useState(false);
+  const [sale, setSale] = useState<SaleSettings | null>(null);
+  useEffect(() => {
+    getActiveSaleClient().then(setSale);
+  }, []);
 
   useEffect(() => {
     setSaved(getWishlist().includes(product.id));
@@ -118,7 +124,20 @@ export default function ProductDetailClient({
           <h1 className="mb-[14px] font-display text-[clamp(34px,4vw,48px)] font-medium leading-none tracking-[-.035em]">
             {product.name}
           </h1>
-          <p className="mb-[26px] font-display text-[22px] text-brown-soft">{product.priceLabel}</p>
+          {(() => {
+            const { discount, finalPrice, onSale } = getEffectivePrice(product, sale);
+            return onSale ? (
+              <p className="mb-[26px] flex items-baseline gap-3">
+                <span className="font-display text-[16px] text-brown-soft line-through">{product.priceLabel}</span>
+                <span className="font-display text-[22px] text-[#a14b3c]">EGP {finalPrice}</span>
+                <span className="bg-[#a14b3c] px-2 py-0.5 text-[10px] font-medium uppercase tracking-[.06em] text-cream">
+                  -{discount}%
+                </span>
+              </p>
+            ) : (
+              <p className="mb-[26px] font-display text-[22px] text-brown-soft">{product.priceLabel}</p>
+            );
+          })()}
           <p className="mb-[30px] max-w-[460px] text-[14.5px] leading-[1.85] text-brown-soft">
             {product.description}
           </p>

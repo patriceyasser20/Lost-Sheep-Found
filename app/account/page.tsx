@@ -1,9 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import { useAuth } from '../context/AuthContext';
-import { useRequireAuth } from '../../lib/useRequireAuth';
 import { supabaseClient } from '../../lib/supabaseClient';
 import VerseBlock from '../components/VerseBlock';
 
@@ -12,6 +12,8 @@ type OrderItem = {
   product_id: string;
   quantity: number;
   unit_price: number;
+  original_price: number | null;
+  discount_percentage: number;
   customization: Record<string, any> | null;
   products: { name: string; image_url: string | null } | null;
 };
@@ -31,8 +33,6 @@ type Order = {
 
 type Resolved = { optionName: string; label: string; swatch?: string; image?: string };
 
-// Selections are stored at checkout as self-contained snapshots:
-// { value, optionName, swatch?, image? } — no lookup needed.
 function resolveSelection(value: any): Resolved {
   if (value && typeof value === 'object' && 'optionName' in value) {
     return {
@@ -45,37 +45,71 @@ function resolveSelection(value: any): Resolved {
   return { optionName: 'Option', label: String(value) };
 }
 
-export default function AccountPage() {
-  useRequireAuth();
-  const { user, signOut } = useAuth();
+const ORDER_SELECT = `
+  id,
+  created_at,
+  status,
+  subtotal,
+  delivery_fee,
+  discount,
+  total,
+  city,
+  shipping_address,
+  order_items (
+    id,
+    product_id,
+    quantity,
+    unit_price,
+    original_price,
+    discount_percentage,
+    customization,
+    products ( name, image_url )
+  )
+`;
+
+function AccountContent() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const orderIdParam = searchParams.get('order_id');
+
+  const { user, signOut, loading: authLoading } = useAuth();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
+  // Viewing a single order via ?order_id= works for guests too (that's how
+  // a guest checkout lands on their confirmation) — only the full "my
+  // orders" list requires being logged in.
   useEffect(() => {
-    if (!user) return;
+    if (orderIdParam) return;
+    if (authLoading) return;
+    if (!user) router.replace('/login');
+  }, [orderIdParam, user, authLoading, router]);
+
+  useEffect(() => {
+    if (orderIdParam) {
+      supabaseClient
+        .from('orders')
+        .select(ORDER_SELECT)
+        .eq('id', orderIdParam)
+        .maybeSingle()
+        .then(({ data, error: fetchError }) => {
+          if (fetchError || !data) {
+            setError("We couldn't find that order.");
+          } else {
+            setOrders([data as any]);
+          }
+          setLoading(false);
+        });
+      return;
+    }
+
+    if (authLoading) return;
+    if (!user) return; // redirect effect above will send them to /login
 
     supabaseClient
       .from('orders')
-      .select(`
-        id,
-        created_at,
-        status,
-        subtotal,
-        delivery_fee,
-        discount,
-        total,
-        city,
-        shipping_address,
-        order_items (
-          id,
-          product_id,
-          quantity,
-          unit_price,
-          customization,
-          products ( name, image_url )
-        )
-      `)
+      .select(ORDER_SELECT)
       .eq('user_id', user.id)
       .order('created_at', { ascending: false })
       .then(({ data, error: fetchError }) => {
@@ -87,18 +121,24 @@ export default function AccountPage() {
         }
         setLoading(false);
       });
-  }, [user]);
+  }, [orderIdParam, user, authLoading]);
+
+  const singleOrderMode = !!orderIdParam;
 
   return (
     <main className="overflow-x-hidden pb-[120px] pt-[70px]">
       <div className="mx-auto max-w-[780px] px-[30px]">
-        <p className="mb-[6px] text-[10px] uppercase tracking-[.16em] text-gold">Your account</p>
-        <h2 className="mt-[30px] mb-4 font-display text-[clamp(30px,3.6vw,38px)] font-medium tracking-[-.03em]">
-          {user?.email ?? 'Loading…'}
-        </h2>
+        {!singleOrderMode && (
+          <>
+            <p className="mb-[6px] text-[10px] uppercase tracking-[.16em] text-gold">Your account</p>
+            <h2 className="mt-[30px] mb-4 font-display text-[clamp(30px,3.6vw,38px)] font-medium tracking-[-.03em]">
+              {user?.email ?? 'Loading…'}
+            </h2>
+          </>
+        )}
 
         <h2 className="mb-4 mt-[52px] font-display text-[clamp(30px,3.6vw,38px)] font-medium tracking-[-.03em]">
-          Order history
+          {singleOrderMode ? 'Your order' : 'Order history'}
         </h2>
 
         {loading ? (
@@ -159,7 +199,6 @@ export default function AccountPage() {
 
                         return (
                           <div key={item.id} className="flex items-start gap-4 text-[13.5px]">
-                            {/* Product thumbnail */}
                             <div className="relative h-16 w-16 flex-shrink-0 overflow-hidden border border-line bg-cream">
                               {item.products?.image_url ? (
                                 <Image
@@ -202,7 +241,21 @@ export default function AccountPage() {
                               )}
                             </div>
 
-                            <span className="flex-shrink-0 text-brown">EGP {item.unit_price * item.quantity}</span>
+                            <div className="flex-shrink-0 text-right">
+                              {item.discount_percentage > 0 && item.original_price != null ? (
+                                <>
+                                  <div className="text-[11px] text-brown-soft line-through">
+                                    EGP {item.original_price * item.quantity}
+                                  </div>
+                                  <div className="text-[#a14b3c]">
+                                    EGP {item.unit_price * item.quantity}
+                                    <span className="ml-1.5 text-[10px]">(-{item.discount_percentage}%)</span>
+                                  </div>
+                                </>
+                              ) : (
+                                <span className="text-brown">EGP {item.unit_price * item.quantity}</span>
+                              )}
+                            </div>
                           </div>
                         );
                       })
@@ -236,14 +289,28 @@ export default function AccountPage() {
             })}
           </div>
         )}
+
+        {!singleOrderMode && user && (
+          <button
+            onClick={signOut}
+            className="mt-[30px] inline-flex min-h-[46px] items-center justify-center gap-[10px] border border-brown bg-transparent px-5 text-[11px] uppercase tracking-[.08em] text-brown transition duration-200 hover:bg-brown hover:text-cream"
+          >
+            Sign out
+          </button>
+        )}
       </div>
 
       <div className="relative left-1/2 right-1/2 mt-16 -ml-[50vw] -mr-[50vw] w-screen">
-        <VerseBlock
-          verse="I will never leave you nor forsake you."
-          reference="Hebrews 13:5"
-        />
+        <VerseBlock verse="I will never leave you nor forsake you." reference="Hebrews 13:5" />
       </div>
     </main>
+  );
+}
+
+export default function AccountPage() {
+  return (
+    <Suspense fallback={null}>
+      <AccountContent />
+    </Suspense>
   );
 }

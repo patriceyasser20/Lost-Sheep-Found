@@ -10,17 +10,21 @@ export type Product = {
   tag: string;
   imageUrl: string | null;
   images: string[];
-  categorySlug: string;
-  categoryName: string;
   customizable: boolean;
   featured: boolean;
   stock: number;
   sku?: string;
+  categoryId: string;
+  categorySlug: string;
+  categoryName: string;
+  isOnSale?: boolean;
+  discountPercentage?: number;
 };
 
 export const PRODUCT_SELECT = `
   id, slug, name, description, price, image_url, is_customizable, is_featured, stock, sku,
-  categories ( name, slug ),
+  is_on_sale, discount_percentage,
+  categories ( id, name, slug ),
   product_images ( image_url, sort_order )
 `;
 
@@ -39,12 +43,17 @@ export function mapProduct(row: any): Product {
       .slice()
       .sort((a: any, b: any) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
       .map((img: any) => img.image_url),
-    categorySlug: row.categories?.slug || '',
-    categoryName: row.categories?.name || 'Uncategorized',
     customizable: row.is_customizable,
     featured: row.is_featured,
     stock: row.stock,
     sku: row.sku || undefined,
+    categoryId: row.categories?.id || '',
+    categorySlug: row.categories?.slug || '',
+    categoryName: row.categories?.name || 'Uncategorized',
+    // These columns don't exist in Supabase yet — run the migration below,
+    // then swap this back to `row.is_on_sale ?? false` / `row.discount_percentage`.
+    isOnSale: row.is_on_sale ?? false,
+    discountPercentage: row.discount_percentage ? Number(row.discount_percentage) : 0,
   };
 }
 

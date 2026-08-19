@@ -1,7 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
 import { ArrowRight, BookOpen, Heart, Sparkles } from "lucide-react";
-import { getFeaturedProducts } from "../lib/productsServer";
 import Reveal from "./components/Reveal";
 import AmbientBackground from "./components/AmbientBackground";
 
@@ -25,8 +24,6 @@ const collections = [
     icon: Heart,
   },
 ];
-
-const featured = await getFeaturedProducts(3);
 
 export default function Home() {
   return (
@@ -73,50 +70,26 @@ export default function Home() {
           <div className="relative flex flex-col items-center">
             <div className="relative flex aspect-square w-full max-w-[430px] items-center justify-center md:max-w-[550px]">
 
-            {/* White background behind the entire logo */}
-            <div
-              className="
-                absolute
-                h-[92%]
-                w-[88%]
-                bg-[#fffdf8]
-              "
-            />
+              {/* White background behind the entire logo */}
+              <div className="absolute h-[92%] w-[88%] bg-[#fffdf8]" />
 
-            {/* Decorative arch border */}
-            <div
-              className="
-                absolute
-                h-[86%]
-                w-[76%]
-                rounded-[48%_48%_3%_3%]
-                border
-                border-gold
-                opacity-70
-              "
-            />
+              {/* Decorative arch border */}
+              <div className="absolute h-[86%] w-[76%] rounded-[48%_48%_3%_3%] border border-gold opacity-70" />
 
-            <Image
-              src="/logo.png"
-              alt="Lost Sheep Found logo with a resting lamb"
-              fill
-              priority
-              className="
-                relative
-                z-10
-                object-contain
-                p-[15px]
-                mix-blend-multiply
-                md:p-[25px]
-              "
-            />
+              <Image
+                src="/logo.png"
+                alt="Lost Sheep Found logo with a resting lamb"
+                fill
+                priority
+                className="relative z-10 object-contain p-[15px] mix-blend-multiply md:p-[25px]"
+              />
 
-          </div>
+            </div>
             <div className="-mt-4 text-center font-display text-[17px] italic leading-[1.35]">
               "The Lord is my shepherd."<br />
               <span className="font-sans text-[9px] not-italic uppercase tracking-[.16em] text-gold">Psalm 23:1</span>
             </div>
-        </div>
+          </div>
         </Reveal>
       </section>
 
@@ -161,36 +134,33 @@ export default function Home() {
         </div>
       </section>
 
+      {/* ---------- Bible feature promo — replaces the old featured-products section ---------- */}
       <section className="mx-auto max-w-[1240px] px-5 pb-[65px] pt-[105px] md:px-[30px] md:pb-[90px]">
         <Reveal>
           <div className="mb-[38px] text-center">
-            <p className="mb-[10px] text-[10px] font-semibold uppercase tracking-[.22em] text-gold">A few favorites</p>
-            <h2 className="m-0 font-display text-[clamp(43px,5vw,62px)] font-medium leading-[.95] tracking-[-.045em]">Made to be kept</h2>
+            <p className="mb-[10px] text-[10px] font-semibold uppercase tracking-[.22em] text-gold">Sit with the Word</p>
+            <h2 className="m-0 font-display text-[clamp(43px,5vw,62px)] font-medium leading-[.95] tracking-[-.045em]">Read Scripture, page by page</h2>
             <p className="mx-auto mt-[17px] max-w-[450px] text-sm leading-[1.7] text-brown-soft">
-              Personal pieces for your Bible, your home, and the people you love.
+              Every book, every chapter, laid out like an actual Bible you can open and turn through.
             </p>
           </div>
         </Reveal>
 
-        <div className="mt-[50px] grid grid-cols-1 gap-[18px] md:grid-cols-3">
-          {featured.map((product, i) => (
-            <Reveal key={product.slug} delay={i * 110} distance={20}>
-              <Link href={`/product/${product.slug}`} className="group">
-                <div className="relative flex aspect-[.88] flex-col items-center justify-center border border-line bg-paper-light text-gold before:absolute before:h-[67%] before:w-[58%] before:rounded-[48%_48%_4%_4%] before:border before:border-gold/[.55] before:content-['']">
-                  <span className="relative z-10 text-[27px]">✦</span>
-                  <span className="relative z-10 mt-[10px] text-[9px] tracking-[.15em] uppercase">{product.id}</span>
-                </div>
-                <div className="flex items-center justify-between px-1 py-[17px]">
-                  <div>
-                    <h3 className="mb-1 font-display text-[22px] font-medium">{product.name}</h3>
-                    <p className="text-[11px] tracking-[.05em] text-brown-soft">{product.priceLabel}</p>
-                  </div>
-                  <ArrowRight size={17} />
-                </div>
-              </Link>
-            </Reveal>
-          ))}
-        </div>
+        <Reveal delay={110} distance={20}>
+          <Link
+            href="/bible"
+            className="group relative mx-auto flex max-w-[720px] flex-col items-center gap-4 border border-line bg-cream/[.52] px-8 py-[70px] text-center transition duration-300 hover:-translate-y-1 hover:bg-cream"
+          >
+            <div className="text-gold"><BookOpen size={28} strokeWidth={1.2} /></div>
+            <h3 className="m-0 font-display text-[29px] font-medium tracking-[-.03em]">Open the Bible</h3>
+            <p className="m-0 max-w-[420px] text-[13px] leading-[1.6] text-brown-soft">
+              Genesis to Revelation, King James Version — tap the cover, flip to a book, and read a chapter at a time.
+            </p>
+            <span className="mt-2 inline-flex items-center gap-2 text-[11px] uppercase tracking-[.15em] text-gold transition group-hover:tracking-[.22em]">
+              Start reading <ArrowRight size={16} />
+            </span>
+          </Link>
+        </Reveal>
       </section>
 
       {/* ---------- "Make it yours" — richer treatment on top of the ambient layer ---------- */}

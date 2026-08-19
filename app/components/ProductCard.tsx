@@ -5,18 +5,22 @@ import Link from 'next/link';
 import { Heart } from 'lucide-react';
 import Image from 'next/image';
 import { useCurrency } from '../context/CurrencyContext';
-import { getActiveOffersClient, findOfferForProduct, offerBadgeText, type Offer } from '../../lib/offers';
+import { getActiveOffersClient, findSaleOfferForProduct, findOfferForProduct, offerBadgeText, type Offer } from '../../lib/offers';
 import { getWishlist, addToWishlist, removeFromWishlist } from '../../lib/localCart';
 import type { Product } from '../../lib/products';
 
 type ProductWithSale = Product & {
-  isOnSale?: boolean;
-  discountPercentage?: number;
   hasVariantSale?: boolean;
   maxVariantDiscount?: number;
 };
 
-export default function ProductCard({ product }: { product: ProductWithSale }) {
+export default function ProductCard({
+  product,
+  hideOfferBadge = false,
+}: {
+  product: ProductWithSale;
+  hideOfferBadge?: boolean;
+}) {
   const { format } = useCurrency();
   const [active, setActive] = useState(false);
 
@@ -46,15 +50,24 @@ export default function ProductCard({ product }: { product: ProductWithSale }) {
 
   const [offers, setOffers] = useState<Offer[]>([]);
   useEffect(() => {
+    if (hideOfferBadge) return;
     let mounted = true;
     getActiveOffersClient().then((data) => { if (mounted) setOffers(data); });
     return () => { mounted = false; };
-  }, []);
+  }, [hideOfferBadge]);
 
-  const activeOffer = findOfferForProduct(product, offers);
-  const discount = product.discountPercentage || 0;
-  const salePrice = product.isOnSale ? product.price * (1 - discount / 100) : product.price;
-  const hasSaleBadge = (product.isOnSale && discount > 0) || (!product.isOnSale && product.hasVariantSale && (product.maxVariantDiscount || 0) > 0);
+  // percent_off offers → sale badge + strikethrough price
+  const saleOffer = hideOfferBadge ? null : findSaleOfferForProduct(product, offers);
+  const discount = saleOffer?.discountPct || 0;
+  const isOnSale = discount > 0;
+  const salePrice = isOnSale ? product.price * (1 - discount / 100) : product.price;
+
+  // buy_x_get_y_free offers → the generic brown "offer" badge
+  const bxgyOffer = hideOfferBadge
+    ? null
+    : findOfferForProduct(product, offers.filter((o) => o.offerType === 'buy_x_get_y_free'));
+
+  const hasSaleBadge = (isOnSale && discount > 0) || (!isOnSale && product.hasVariantSale && (product.maxVariantDiscount || 0) > 0);
 
   return (
     <Link href={`/product/${product.slug}`} className="group block border border-line bg-cream">
@@ -74,22 +87,22 @@ export default function ProductCard({ product }: { product: ProductWithSale }) {
           </div>
         )}
 
-        {product.isOnSale && discount > 0 && (
+        {isOnSale && discount > 0 && (
           <div className="absolute left-3 top-3 z-10 bg-[#a14b3c] px-2.5 py-1 text-[10px] font-medium uppercase tracking-[.06em] text-cream">
             -{discount}%
           </div>
         )}
-        {!product.isOnSale && product.hasVariantSale && (product.maxVariantDiscount || 0) > 0 && (
+        {!isOnSale && product.hasVariantSale && (product.maxVariantDiscount || 0) > 0 && (
           <div className="absolute left-3 top-3 z-10 bg-gold px-2.5 py-1 text-[10px] font-medium uppercase tracking-[.06em] text-cream">
             Up to -{product.maxVariantDiscount}%
           </div>
         )}
-        {activeOffer && (
+        {bxgyOffer && (
           <div
             className="absolute left-3 z-10 bg-brown px-2.5 py-1 text-[10px] font-medium uppercase tracking-[.06em] text-cream"
             style={{ top: hasSaleBadge ? '2.75rem' : '0.75rem' }}
           >
-            {offerBadgeText(activeOffer)}
+            {offerBadgeText(bxgyOffer)}
           </div>
         )}
 
@@ -109,7 +122,7 @@ export default function ProductCard({ product }: { product: ProductWithSale }) {
           {product.name}
         </h3>
         <div className="mt-1 flex items-baseline gap-2">
-          {product.isOnSale && discount > 0 ? (
+          {isOnSale && discount > 0 ? (
             <>
               <span className="text-[13px] text-brown-soft line-through">{format(product.price)}</span>
               <span className="text-lg font-medium text-[#a14b3c]">{format(salePrice)}</span>

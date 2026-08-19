@@ -4,17 +4,25 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { ArrowRight, Minus, Plus } from 'lucide-react';
 import { getProductsClient, type Product } from '../../lib/products';
+import { getEffectivePrice } from '../../lib/pricing';
+import { getActiveOffersClient, type Offer } from '../../lib/offers';
+import { getActiveSaleClient, type SaleSettings } from '../../lib/sale';
+import { computeOfferDiscounts, getOfferHint } from '../../lib/offerPricing';
 import { useCart } from '../context/CartContext';
 import VerseBlock from '../components/VerseBlock';
 
 export default function CartPage() {
   const [products, setProducts] = useState<Product[]>([]);
+  const [offers, setOffers] = useState<Offer[]>([]);
+  const [sale, setSale] = useState<SaleSettings | null>(null);
   const [loading, setLoading] = useState(true);
   const { lines: cart, updateQty, removeLine } = useCart();
 
   useEffect(() => {
-    getProductsClient().then((data) => {
-      setProducts(data);
+    Promise.all([getProductsClient(), getActiveOffersClient(), getActiveSaleClient()]).then(([p, o, s]) => {
+      setProducts(p);
+      setOffers(o);
+      setSale(s);
       setLoading(false);
     });
   }, []);
@@ -23,8 +31,18 @@ export default function CartPage() {
     .map((line) => ({ line, product: products.find((p) => p.id === line.id) }))
     .filter((l) => l.product);
 
-  const subtotal = lines.reduce((sum, l) => sum + l.product!.price * l.line.qty, 0);
-  const total = subtotal;
+  const subtotal = lines.reduce((sum, l) => {
+    const { finalPrice } = getEffectivePrice(l.product!, sale);
+    return sum + finalPrice * l.line.qty;
+  }, 0);
+
+  const appliedOffers = computeOfferDiscounts(
+    lines as any,
+    offers,
+    (p) => getEffectivePrice(p, sale).finalPrice
+  );
+  const offerDiscount = appliedOffers.reduce((sum, o) => sum + o.discountAmount, 0);
+  const total = Math.max(0, subtotal - offerDiscount);
 
   if (loading) {
     return (
@@ -60,9 +78,11 @@ export default function CartPage() {
             <div className="border-t border-line">
               {lines.map(({ line, product }) => {
                 const selectionEntries = line.selections ? Object.values(line.selections) : [];
+                const { discount, finalPrice, onSale } = getEffectivePrice(product!, sale);
+                const hint = getOfferHint(product!, offers, lines as any);
                 return (
                   <div key={line.lineId} className="grid grid-cols-[96px_1fr_auto_auto] items-center gap-[22px] border-b border-line py-[26px]">
-                    <div className="flex h-[108px] w-24 flex-shrink-0 items-center justify-center overflow-hidden border border-line bg-paper-light text-gold">
+                    <div className="relative flex h-[108px] w-24 flex-shrink-0 items-center justify-center overflow-hidden border border-line bg-paper-light text-gold">
                       {product!.imageUrl ? (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img
@@ -73,6 +93,11 @@ export default function CartPage() {
                       ) : (
                         <span className="text-2xl">✦</span>
                       )}
+                      {onSale && (
+                        <span className="absolute left-1 top-1 bg-[#a14b3c] px-1.5 py-0.5 text-[9px] font-medium uppercase tracking-[.04em] text-cream">
+                          -{discount}%
+                        </span>
+                      )}
                     </div>
                     <div>
                       <h3 className="mb-[6px] text-lg tracking-[-.01em]">{product!.name}</h3>
@@ -82,6 +107,9 @@ export default function CartPage() {
                         </p>
                       ) : (
                         <p className="m-0 text-[11px] tracking-[.04em] text-brown-soft">{product!.tag}</p>
+                      )}
+                      {hint && (
+                        <p className="mt-1.5 text-[11px] text-gold">{hint}</p>
                       )}
                       <button
                         onClick={() => removeLine(line.lineId)}
@@ -107,7 +135,18 @@ export default function CartPage() {
                         <Plus size={13} />
                       </button>
                     </div>
-                    <div className="min-w-[80px] text-right text-sm">EGP {product!.price * line.qty}</div>
+                    <div className="min-w-[80px] text-right text-sm">
+                      {onSale ? (
+                        <>
+                          <span className="mr-1.5 text-[12px] text-brown-soft line-through">
+                            EGP {product!.price * line.qty}
+                          </span>
+                          <span className="text-[#a14b3c]">EGP {finalPrice * line.qty}</span>
+                        </>
+                      ) : (
+                        <>EGP {finalPrice * line.qty}</>
+                      )}
+                    </div>
                   </div>
                 );
               })}
@@ -127,6 +166,13 @@ export default function CartPage() {
               <span>Subtotal</span>
               <span className="text-brown">EGP {subtotal}</span>
             </div>
+
+            {appliedOffers.map((o) => (
+              <div key={o.offer.id} className="flex justify-between border-b border-line py-[11px] text-[13.5px] text-brown-soft">
+                <span>🏷️ {o.offer.title}</span>
+                <span className="text-[#a14b3c]">-EGP {o.discountAmount}</span>
+              </div>
+            ))}
 
             <div className="flex justify-between pt-[18px] text-base text-brown">
               <span>Total</span>

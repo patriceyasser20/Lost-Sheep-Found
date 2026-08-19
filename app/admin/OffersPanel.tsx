@@ -106,7 +106,7 @@ export default function OffersPanel() {
 
   function targetOptions() {
     if (form.appliesTo === 'product') return products.map((p) => ({ id: p.id, label: p.name }));
-    if (form.appliesTo === 'category' || form.appliesTo === 'collection') {
+    if (form.appliesTo === 'category') {
       return categories.map((c) => ({ id: c.id, label: c.name }));
     }
     return [];
@@ -118,7 +118,7 @@ export default function OffersPanel() {
   const targetIsCustomizable =
     form.appliesTo === 'product'
       ? !!products.find((p) => p.id === form.targetId)?.customizable
-      : form.appliesTo === 'category' || form.appliesTo === 'collection' || form.appliesTo === 'all';
+      : form.appliesTo === 'category' || form.appliesTo === 'all';
 
   async function saveOffer() {
   if (!form.title.trim()) {
@@ -266,9 +266,6 @@ export default function OffersPanel() {
                 <ToggleButton active={form.appliesTo === 'category'} onClick={() => setForm({ ...form, appliesTo: 'category', targetId: '' })}>
                   Category
                 </ToggleButton>
-                <ToggleButton active={form.appliesTo === 'collection'} onClick={() => setForm({ ...form, appliesTo: 'collection', targetId: '' })}>
-                  Collection
-                </ToggleButton>
                 <ToggleButton active={form.appliesTo === 'all'} onClick={() => setForm({ ...form, appliesTo: 'all', targetId: '' })}>
                   All Products
                 </ToggleButton>
@@ -276,7 +273,6 @@ export default function OffersPanel() {
               <p className="mt-2 text-[12px] text-brown-soft">
                 {form.appliesTo === 'product' && 'A single item — e.g. just the Shepherd Journal.'}
                 {form.appliesTo === 'category' && 'A whole category — e.g. all Bible Journals, or all Wood Blocks.'}
-                {form.appliesTo === 'collection' && 'A curated grouping, if you have one set up (e.g. an Advent collection).'}
                 {form.appliesTo === 'all' && 'Every product in the store, customizable or not.'}
               </p>
             </div>

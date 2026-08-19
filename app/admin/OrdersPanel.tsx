@@ -153,9 +153,21 @@ export default function OrdersPanel() {
                             )}
                           </div>
 
-                          <span className="flex-shrink-0 text-brown">
-                            EGP {item.unitPrice * item.quantity}
-                          </span>
+                          <div className="flex-shrink-0 text-right">
+                            {item.discountPercentage > 0 && item.originalPrice != null ? (
+                              <>
+                                <div className="text-[11px] text-brown-soft line-through">
+                                  EGP {item.originalPrice * item.quantity}
+                                </div>
+                                <div className="text-[#a14b3c]">
+                                  EGP {item.unitPrice * item.quantity}
+                                  <span className="ml-1.5 text-[10px]">(-{item.discountPercentage}%)</span>
+                                </div>
+                              </>
+                            ) : (
+                              <span className="text-brown">EGP {item.unitPrice * item.quantity}</span>
+                            )}
+                          </div>
                         </div>
                       );
                     })
