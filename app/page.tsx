@@ -163,6 +163,27 @@ export default function Home() {
         </Reveal>
       </section>
 
+      {/* ---------- Daily Katameros reading — 365-day lectionary cycle ---------- */}
+      <section className="mx-auto max-w-[1240px] px-5 pb-[65px] md:px-[30px] md:pb-[90px]">
+        <Reveal delay={110} distance={20}>
+          <Link
+            href="/daily-reading"
+            className="group relative mx-auto flex max-w-[720px] flex-col items-center gap-4 border border-line bg-cream/[.52] px-8 py-[70px] text-center transition duration-300 hover:-translate-y-1 hover:bg-cream"
+          >
+            <div className="text-gold"><BookOpen size={28} strokeWidth={1.2} /></div>
+            <p className="m-0 text-[10px] font-semibold uppercase tracking-[.22em] text-gold">The Katameros</p>
+            <h3 className="m-0 font-display text-[29px] font-medium tracking-[-.03em]">Today's daily reading</h3>
+            <p className="m-0 max-w-[420px] text-[13px] leading-[1.6] text-brown-soft">
+              A year-long journey through Scripture, following the Coptic Orthodox Church's calendar —
+              one reading a day.
+            </p>
+            <span className="mt-2 inline-flex items-center gap-2 text-[11px] uppercase tracking-[.15em] text-gold transition group-hover:tracking-[.22em]">
+              Read today's passage <ArrowRight size={16} />
+            </span>
+          </Link>
+        </Reveal>
+      </section>
+
       {/* ---------- "Make it yours" — richer treatment on top of the ambient layer ---------- */}
       <section className="relative mt-[50px] overflow-hidden bg-brown text-center text-cream">
         {/* extra, section-local glow layered above the site-wide ambient background */}

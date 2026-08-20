@@ -68,11 +68,11 @@ export default async function SalePage() {
                 <ProductCard product={product} key={product.id} hideOfferBadge />
               ))}
             </div>
-            <div className="pb-[110px]">
-              <VerseBlock verse="Freely you have received; freely give." reference="Matthew 10:8" />
-            </div>
           </>
         )}
+      </div>
+      <div className="pb-[110px] py-20" >
+          <VerseBlock verse="Freely you have received; freely give." reference="Matthew 10:8" />
       </div>
     </main>
   );

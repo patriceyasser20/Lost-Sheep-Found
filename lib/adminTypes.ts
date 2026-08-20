@@ -13,12 +13,13 @@ export type Offer = {
   offerType: OfferType;
   buyQty: number;
   getQty: number;
-  discountPct: number; //  used when offerType === 'percent_off'
+  discountPct: number;
   appliesTo: OfferAppliesTo;
-  targetId: string; // product/category/collection id — '' when appliesTo === 'all'
-  targetLabel?: string; // display label for the table, resolved at save time
+  targetId: string;
+  targetLabel?: string;
   requireSameVariant: boolean;
-  endsAt: string; // '' when no end date
+  bannerText: string;
+  endsAt: string;
   active: boolean;
 };
 export const mockOffers: Offer[] = [];

@@ -215,8 +215,8 @@ export default function ProductDetailClient({
         </section>
       )}
       <VerseBlock
-        verse="Your word is a lamp for my feet, a light on my path."
-        reference="Psalm 119:105"
+        verse="I have called thee by thy name; thou art mine."
+        reference="Isaiah 43:1"
       />
     </main>
   );

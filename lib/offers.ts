@@ -15,6 +15,7 @@ export type Offer = {
   targetId: string; // product/category slug or id — '' when appliesTo === 'all'
   targetLabel?: string;
   requireSameVariant: boolean;
+  bannerText: string; // '' when no custom banner text set — falls back to title
   endsAt: string; // '' when no end date
   active: boolean;
 };
@@ -31,6 +32,7 @@ function mapOffer(row: any): Offer {
     targetId: row.target_id || '',
     targetLabel: row.target_label || '',
     requireSameVariant: row.require_same_variant,
+    bannerText: row.banner_text || '',
     endsAt: row.ends_at || '',
     active: row.active,
   };

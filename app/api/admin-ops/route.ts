@@ -111,21 +111,22 @@ const handlers: Record<string, (payload: any) => Promise<any>> = {
 
   // ---------- offers ----------
   'insert-offer': async ({ id, ...rest }) =>
-  unwrap(
-    db.from('offers').insert({
-      title: rest.title,
-      offer_type: rest.offerType,
-      buy_qty: rest.buyQty,
-      get_qty: rest.getQty,
-      discount_pct: rest.discountPct,
-      applies_to: rest.appliesTo,
-      target_id: rest.targetId || null,
-      target_label: rest.targetLabel || null,
-      require_same_variant: rest.requireSameVariant,
-      ends_at: rest.endsAt || null,
-      active: rest.active,
-    }).select().single()
-  ),
+    unwrap(
+      db.from('offers').insert({
+        title: rest.title,
+        offer_type: rest.offerType,
+        buy_qty: rest.buyQty,
+        get_qty: rest.getQty,
+        discount_pct: rest.discountPct,
+        applies_to: rest.appliesTo,
+        target_id: rest.targetId || null,
+        target_label: rest.targetLabel || null,
+        require_same_variant: rest.requireSameVariant,
+        banner_text: rest.bannerText || null,
+        ends_at: rest.endsAt || null,
+        active: rest.active,
+      }).select().single()
+    ),
 
   'update-offer': async (payload) => {
     const { id, ...rest } = payload;
@@ -141,6 +142,7 @@ const handlers: Record<string, (payload: any) => Promise<any>> = {
         target_id: rest.targetId || null,
         target_label: rest.targetLabel || null,
         require_same_variant: rest.requireSameVariant,
+        banner_text: rest.bannerText || null,
         ends_at: rest.endsAt || null,
         active: rest.active,
       })

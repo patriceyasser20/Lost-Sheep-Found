@@ -22,6 +22,7 @@ const EMPTY_FORM: Omit<Offer, 'id'> = {
   targetId: '',
   targetLabel: '',
   requireSameVariant: false,
+  bannerText: '',
   endsAt: '',
   active: true,
 };
@@ -196,6 +197,19 @@ export default function OffersPanel() {
                 onChange={(e) => setForm({ ...form, title: e.target.value })}
                 className={inputBase}
               />
+            </div>
+            <div>
+              <label className={labelBase}>Banner text</label>
+              <input
+                type="text"
+                placeholder="Buy 2, get 1 free — this week only"
+                value={form.bannerText}
+                onChange={(e) => setForm({ ...form, bannerText: e.target.value })}
+                className={inputBase}
+              />
+              <p className="mt-1.5 text-[11.5px] text-brown-soft">
+                Shown in the site-wide banner at the top of every page while this offer is active. Leave blank to use the offer name instead.
+              </p>
             </div>
 
             <div>

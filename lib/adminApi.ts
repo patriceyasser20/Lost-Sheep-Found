@@ -68,6 +68,7 @@ function mapOffer(row: any): Offer {
     targetId: row.target_id || '',
     targetLabel: row.target_label || '',
     requireSameVariant: row.require_same_variant,
+    bannerText: row.banner_text || '',
     endsAt: row.ends_at || '',
     active: row.active,
   };

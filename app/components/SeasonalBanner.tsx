@@ -29,9 +29,13 @@ export default function SeasonalBanner() {
       try {
         const offers = await getActiveOffersClient();
         if (!active) return;
+
+        const withText = offers?.find((o) => o.bannerText?.trim());
         setBanner(
-          offers && offers.length > 0
-            ? { text: 'New offers available — shop now', href: '/offers' }
+          withText
+            ? { text: withText.bannerText, href: '/offers' }
+            : offers && offers.length > 0
+            ? { text: offers[0].title, href: '/offers' }
             : null
         );
       } catch {

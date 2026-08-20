@@ -9,11 +9,10 @@ export default function Footer() {
       </div>
       <div className="grid grid-cols-3 gap-[25px]">
         <div className="flex flex-col gap-[10px]">
-          <strong className="mb-[5px] text-[9px] tracking-[.18em] uppercase text-gold">Shop</strong>
-          <Link href="/shop" className="text-xs text-brown-soft hover:text-brown">All pieces</Link>
-          <Link href="/collection/bible-journals" className="text-xs text-brown-soft hover:text-brown">Journals</Link>
-          <Link href="/collection/wood-blocks" className="text-xs text-brown-soft hover:text-brown">Wood verses</Link>
-          <Link href="/sale" className="text-xs text-brown-soft hover:text-brown">Sale</Link>
+          <strong className="mb-[5px] text-[9px] tracking-[.18em] uppercase text-gold">Bible</strong>
+          <Link href="/bible" className="text-xs text-brown-soft hover:text-brown">Bible</Link>
+          <Link href="/bible/old" className="text-xs text-brown-soft hover:text-brown">Old Testament</Link>
+          <Link href="/bible/new" className="text-xs text-brown-soft hover:text-brown">New Testament</Link>
         </div>
         <div className="flex flex-col gap-[10px]">
           <strong className="mb-[5px] text-[9px] tracking-[.18em] uppercase text-gold">About</strong>
