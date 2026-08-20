@@ -191,6 +191,13 @@ export default function ProductDetailClient({
               Choose the required options above before adding this piece to your cart.
             </p>
           )}
+          {product.customizable && (
+            <p className="-mt-6 mb-9 text-[11px] leading-[1.6] text-brown-soft/80">
+              Lost Sheep Found is not responsible for any spelling mistakes entered by the customer.
+              Known words that are mistakenly written will be corrected only — all other personalization
+              text is engraved or printed exactly as submitted.
+            </p>
+          )}
         </div>
       </div>
 

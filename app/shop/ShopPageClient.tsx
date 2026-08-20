@@ -1,5 +1,6 @@
 'use client';
 
+import { useMemo } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { ArrowRight } from 'lucide-react';
@@ -7,17 +8,25 @@ import ProductCard from '../components/ProductCard';
 import VerseBlock from '../components/VerseBlock';
 import type { Product } from '../../lib/products';
 
-const categories = [
-  { label: 'All Pieces', value: '' },
-  { label: 'Bible Journals', value: 'bible-journals' },
-  { label: 'Wooden Verses', value: 'wood-blocks' },
-  { label: 'Keepsakes', value: 'keepsakes' },
-];
-
 export default function ShopPageClient({ initialProducts }: { initialProducts: Product[] }) {
   const searchParams = useSearchParams();
   const activeCategory = searchParams.get('category') ?? '';
   const customizableOnly = searchParams.get('customizable') === 'true';
+
+  // Built from whatever products actually exist, so a category only shows
+  // up once something's been added to it — no hardcoded list to fall out
+  // of sync with the catalog.
+  const categories = useMemo(() => {
+    const seen = new Map<string, string>(); // slug -> name
+    for (const p of initialProducts) {
+      if (p.categorySlug && !seen.has(p.categorySlug)) {
+        seen.set(p.categorySlug, p.categoryName || p.categorySlug);
+      }
+    }
+    const dynamic = Array.from(seen, ([value, label]) => ({ value, label }))
+      .sort((a, b) => a.label.localeCompare(b.label));
+    return [{ label: 'All Pieces', value: '' }, ...dynamic];
+  }, [initialProducts]);
 
   const list = initialProducts.filter((p) => {
     if (activeCategory && p.categorySlug !== activeCategory) return false;

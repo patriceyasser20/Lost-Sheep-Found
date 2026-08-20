@@ -5,7 +5,7 @@ import Image from 'next/image';
 import { getProductsClient, type Product } from '../../lib/products';
 import { supabaseClient } from '../../lib/supabaseClient';
 import { adminApi } from '../../lib/adminApi';
-import { Plus, Trash2, Edit2, X, ImagePlus } from 'lucide-react';
+import { Plus, Trash2, Edit2, X, ImagePlus, GripVertical, Lock } from 'lucide-react';
 import {
   OPTION_PRESETS,
   type CustomizationOption,
@@ -57,6 +57,8 @@ function CustomizationEditor({
   onChange: (next: CustomizationOption[]) => void;
 }) {
   const [uploadingChoiceId, setUploadingChoiceId] = useState<string | null>(null);
+  const [draggedOptIndex, setDraggedOptIndex] = useState<number | null>(null);
+  const [draggedChoice, setDraggedChoice] = useState<{ optId: string; index: number } | null>(null);
 
   function addPreset(key: string) {
     const preset = OPTION_PRESETS[key];
@@ -80,6 +82,17 @@ function CustomizationEditor({
     onChange(options.filter((o) => o.id !== id));
   }
 
+  // Reordering an option group. Language can't be dragged (no drag handlers
+  // are ever attached to it), and re-running withLanguageEnforced after
+  // every reorder guarantees it snaps back to the top even if a drop
+  // target briefly put something else first mid-gesture.
+  function reorderOptions(from: number, to: number) {
+    const updated = [...options];
+    const [moved] = updated.splice(from, 1);
+    updated.splice(to, 0, moved);
+    onChange(withLanguageEnforced(updated));
+  }
+
   function addChoice(optId: string) {
     const opt = options.find((o) => o.id === optId)!;
     const choice: OptionChoice = { id: `choice-${Date.now()}`, label: '', swatch: '#a1792f', sku: '' };
@@ -96,6 +109,14 @@ function CustomizationEditor({
   function removeChoice(optId: string, choiceId: string) {
     const opt = options.find((o) => o.id === optId)!;
     update(optId, { options: opt.options.filter((c) => c.id !== choiceId) });
+  }
+
+  function reorderChoices(optId: string, from: number, to: number) {
+    const opt = options.find((o) => o.id === optId)!;
+    const updated = [...opt.options];
+    const [moved] = updated.splice(from, 1);
+    updated.splice(to, 0, moved);
+    update(optId, { options: updated });
   }
 
   async function uploadChoiceImage(optId: string, choiceId: string, file: File) {
@@ -134,137 +155,207 @@ function CustomizationEditor({
 
       {options.length === 0 && (
         <p className="text-sm text-brown-soft/70">
-          No customization options yet — add Cover, Colors, Designs, Template, or a Prompt field above.
+          No customization options yet — add Language, Cover, Colors, Designs, Template, or a Prompt field above.
         </p>
       )}
 
       <div className="space-y-4">
-        {options.map((opt) => (
-          <div key={opt.id} className="border border-line bg-cream p-4">
-            <div className="mb-3 flex flex-wrap items-center gap-3">
-              <input
-                type="text"
-                placeholder="Option name (e.g. Cover)"
-                value={opt.name}
-                onChange={(e) => update(opt.id, { name: e.target.value })}
-                className="min-w-[160px] flex-1 border border-line bg-cream px-3 py-2 text-sm text-brown outline-none focus:border-gold"
-              />
-              <select
-                value={opt.type}
-                onChange={(e) => update(opt.id, { type: e.target.value as CustomizationOption['type'] })}
-                className="border border-line bg-cream px-3 py-2 text-sm text-brown outline-none focus:border-gold"
-              >
-                <option value="select">Select (choices)</option>
-                <option value="text">Short text</option>
-                <option value="textarea">Long text / prompt</option>
-              </select>
-              <label className="flex items-center gap-2 text-xs text-brown-soft">
+        {options.map((opt, optIndex) => {
+          const isLanguage = opt.name === 'Language';
+          return (
+            <div
+              key={opt.id}
+              draggable={!isLanguage}
+              onDragStart={() => !isLanguage && setDraggedOptIndex(optIndex)}
+              onDragOver={(e) => {
+                if (isLanguage || draggedOptIndex === null || draggedOptIndex === optIndex) return;
+                e.preventDefault();
+                reorderOptions(draggedOptIndex, optIndex);
+                setDraggedOptIndex(optIndex);
+              }}
+              onDrop={(e) => e.preventDefault()}
+              onDragEnd={() => setDraggedOptIndex(null)}
+              className={`border border-line bg-cream p-4 transition ${
+                draggedOptIndex === optIndex ? 'scale-[.99] opacity-50' : ''
+              }`}
+            >
+              <div className="mb-3 flex flex-wrap items-center gap-3">
+                {isLanguage ? (
+                  <span
+                    className="flex h-8 w-8 flex-shrink-0 items-center justify-center text-brown-soft"
+                    title="Always first, can't be reordered"
+                  >
+                    <Lock size={14} />
+                  </span>
+                ) : (
+                  <span
+                    className="flex h-8 w-8 flex-shrink-0 cursor-move items-center justify-center text-brown-soft"
+                    title="Drag to reorder"
+                  >
+                    <GripVertical size={16} />
+                  </span>
+                )}
+
                 <input
-                  type="checkbox"
-                  checked={opt.required}
-                  onChange={(e) => update(opt.id, { required: e.target.checked })}
-                  className="accent-brown"
+                  type="text"
+                  placeholder="Option name (e.g. Cover)"
+                  value={opt.name}
+                  onChange={(e) => update(opt.id, { name: e.target.value })}
+                  disabled={isLanguage}
+                  className="min-w-[160px] flex-1 border border-line bg-cream px-3 py-2 text-sm text-brown outline-none focus:border-gold disabled:bg-paper-light disabled:text-brown-soft"
                 />
-                Required
-              </label>
-              <button onClick={() => remove(opt.id)} className="ml-auto text-brown-soft transition hover:text-[#a14b3c]" aria-label="Remove option">
-                <Trash2 size={16} />
-              </button>
-            </div>
-
-            {opt.type === 'select' ? (
-              <div className="space-y-2">
-                {opt.options.map((c, i) => {
-                  const choiceKey = c.id || `choice-${i}`;
-                  const isUploading = uploadingChoiceId === choiceKey;
-                  return (
-                    <div key={choiceKey} className="border border-line/60 bg-paper-light/40 p-2.5">
-                      <div className="flex items-center gap-3">
-                        <label
-                          className="relative flex h-16 w-16 flex-shrink-0 cursor-pointer items-center justify-center overflow-hidden border border-line bg-paper-light"
-                          title={c.image ? 'Change picture' : 'Add picture'}
-                        >
-                          {c.image ? (
-                            <Image src={c.image} alt={c.label || 'choice'} fill className="object-cover" />
-                          ) : isUploading ? (
-                            <span className="text-[10px] text-brown-soft">…</span>
-                          ) : (
-                            <ImagePlus size={20} className="text-brown-soft" />
-                          )}
-                          <input
-                            type="file"
-                            accept="image/*"
-                            className="hidden"
-                            onChange={(e) => {
-                              const file = e.target.files?.[0];
-                              if (file) uploadChoiceImage(opt.id, c.id, file);
-                            }}
-                          />
-                        </label>
-
-                        <input
-                          type="color"
-                          value={c.swatch || '#a1792f'}
-                          onChange={(e) => updateChoice(opt.id, c.id, { swatch: e.target.value })}
-                          className="h-6 w-6 flex-shrink-0 border border-line p-0"
-                          title="Fallback color (used if no picture is set)"
-                        />
-
-                        <input
-                          type="text"
-                          placeholder="Choice label (e.g. Gold Foil)"
-                          value={c.label}
-                          onChange={(e) => updateChoice(opt.id, c.id, { label: e.target.value })}
-                          className="flex-1 border border-line bg-cream px-3 py-1.5 text-sm text-brown outline-none focus:border-gold"
-                        />
-
-                        {c.image && (
-                          <button
-                            onClick={() => updateChoice(opt.id, c.id, { image: undefined })}
-                            className="text-[10px] uppercase tracking-[.06em] text-brown-soft transition hover:text-brown"
-                            title="Remove picture, keep color"
-                          >
-                            Clear pic
-                          </button>
-                        )}
-
-                        <button onClick={() => removeChoice(opt.id, c.id)} className="text-brown-soft transition hover:text-[#a14b3c]" aria-label="Remove choice">
-                          <X size={14} />
-                        </button>
-                      </div>
-
-                      {/* Child SKU — one per choice (e.g. LSF-JRN-001-LINEN), sits under the parent product SKU */}
-                      <div className="mt-2 pl-[76px]">
-                        <input
-                          type="text"
-                          placeholder="Child SKU (e.g. LSF-JRN-001-LINEN)"
-                          value={c.sku || ''}
-                          onChange={(e) => updateChoice(opt.id, c.id, { sku: e.target.value.toUpperCase() })}
-                          className="w-full max-w-xs border border-line bg-cream px-2.5 py-1.5 text-[12px] text-brown outline-none focus:border-gold"
-                        />
-                      </div>
-                    </div>
-                  );
-                })}
-                <button
-                  type="button"
-                  onClick={() => addChoice(opt.id)}
-                  className="flex items-center gap-1 text-[11px] uppercase tracking-[.06em] text-brown-soft transition hover:text-brown"
+                <select
+                  value={opt.type}
+                  onChange={(e) => update(opt.id, { type: e.target.value as CustomizationOption['type'] })}
+                  disabled={isLanguage}
+                  className="border border-line bg-cream px-3 py-2 text-sm text-brown outline-none focus:border-gold disabled:bg-paper-light disabled:text-brown-soft"
                 >
-                  <Plus size={12} /> Add choice
-                </button>
+                  <option value="select">Select (choices)</option>
+                  <option value="text">Short text</option>
+                  <option value="textarea">Long text / prompt</option>
+                </select>
+                <label className="flex items-center gap-2 text-xs text-brown-soft">
+                  <input
+                    type="checkbox"
+                    checked={opt.required}
+                    disabled={isLanguage}
+                    onChange={(e) => update(opt.id, { required: e.target.checked })}
+                    className="accent-brown"
+                  />
+                  Required{isLanguage ? ' (always)' : ''}
+                </label>
+                {!isLanguage && (
+                  <button
+                    onClick={() => remove(opt.id)}
+                    className="ml-auto text-brown-soft transition hover:text-[#a14b3c]"
+                    aria-label="Remove option"
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                )}
               </div>
-            ) : (
-              <input
-                type="text"
-                placeholder="Placeholder text shown to the customer"
-                value={opt.placeholder || ''}
-                onChange={(e) => update(opt.id, { placeholder: e.target.value })}
-                className="w-full border border-line bg-cream px-3 py-2 text-sm text-brown outline-none focus:border-gold"
-              />
-            )}
-          </div>
-        ))}
+
+              {opt.type === 'select' ? (
+                <div className="space-y-2 pl-[44px]">
+                  {opt.options.map((c, i) => {
+                    const choiceKey = c.id || `choice-${i}`;
+                    const isUploading = uploadingChoiceId === choiceKey;
+                    const isDraggingThis = draggedChoice?.optId === opt.id && draggedChoice.index === i;
+                    return (
+                      <div
+                        key={choiceKey}
+                        draggable
+                        onDragStart={() => setDraggedChoice({ optId: opt.id, index: i })}
+                        onDragOver={(e) => {
+                          if (!draggedChoice || draggedChoice.optId !== opt.id || draggedChoice.index === i) return;
+                          e.preventDefault();
+                          reorderChoices(opt.id, draggedChoice.index, i);
+                          setDraggedChoice({ optId: opt.id, index: i });
+                        }}
+                        onDrop={(e) => e.preventDefault()}
+                        onDragEnd={() => setDraggedChoice(null)}
+                        className={`border border-line/60 bg-paper-light/40 p-2.5 transition ${
+                          isDraggingThis ? 'scale-[.99] opacity-50' : ''
+                        }`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <span
+                            className="flex h-6 w-4 flex-shrink-0 cursor-move items-center justify-center text-brown-soft/70"
+                            title="Drag to reorder"
+                          >
+                            <GripVertical size={14} />
+                          </span>
+
+                          <label
+                            className="relative flex h-16 w-16 flex-shrink-0 cursor-pointer items-center justify-center overflow-hidden border border-line bg-paper-light"
+                            title={c.image ? 'Change picture' : 'Add picture'}
+                          >
+                            {c.image ? (
+                              <Image src={c.image} alt={c.label || 'choice'} fill className="object-cover" />
+                            ) : isUploading ? (
+                              <span className="text-[10px] text-brown-soft">…</span>
+                            ) : (
+                              <ImagePlus size={20} className="text-brown-soft" />
+                            )}
+                            <input
+                              type="file"
+                              accept="image/*"
+                              className="hidden"
+                              onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                if (file) uploadChoiceImage(opt.id, c.id, file);
+                              }}
+                            />
+                          </label>
+
+                          <input
+                            type="color"
+                            value={c.swatch || '#a1792f'}
+                            onChange={(e) => updateChoice(opt.id, c.id, { swatch: e.target.value })}
+                            className="h-6 w-6 flex-shrink-0 border border-line p-0"
+                            title="Fallback color (used if no picture is set)"
+                          />
+
+                          <input
+                            type="text"
+                            placeholder="Choice label (e.g. Gold Foil)"
+                            value={c.label}
+                            onChange={(e) => updateChoice(opt.id, c.id, { label: e.target.value })}
+                            className="flex-1 border border-line bg-cream px-3 py-1.5 text-sm text-brown outline-none focus:border-gold"
+                          />
+
+                          {c.image && (
+                            <button
+                              onClick={() => updateChoice(opt.id, c.id, { image: undefined })}
+                              className="text-[10px] uppercase tracking-[.06em] text-brown-soft transition hover:text-brown"
+                              title="Remove picture, keep color"
+                            >
+                              Clear pic
+                            </button>
+                          )}
+
+                          <button
+                            onClick={() => removeChoice(opt.id, c.id)}
+                            className="text-brown-soft transition hover:text-[#a14b3c]"
+                            aria-label="Remove choice"
+                          >
+                            <X size={14} />
+                          </button>
+                        </div>
+
+                        {/* Child SKU — one per choice (e.g. LSF-JRN-001-LINEN), sits under the parent product SKU */}
+                        <div className="mt-2 pl-[92px]">
+                          <input
+                            type="text"
+                            placeholder="Child SKU (e.g. LSF-JRN-001-LINEN)"
+                            value={c.sku || ''}
+                            onChange={(e) => updateChoice(opt.id, c.id, { sku: e.target.value.toUpperCase() })}
+                            className="w-full max-w-xs border border-line bg-cream px-2.5 py-1.5 text-[12px] text-brown outline-none focus:border-gold"
+                          />
+                        </div>
+                      </div>
+                    );
+                  })}
+                  <button
+                    type="button"
+                    onClick={() => addChoice(opt.id)}
+                    className="flex items-center gap-1 text-[11px] uppercase tracking-[.06em] text-brown-soft transition hover:text-brown"
+                  >
+                    <Plus size={12} /> Add choice
+                  </button>
+                </div>
+              ) : (
+                <input
+                  type="text"
+                  placeholder="Placeholder text shown to the customer"
+                  value={opt.placeholder || ''}
+                  onChange={(e) => update(opt.id, { placeholder: e.target.value })}
+                  className="w-full border border-line bg-cream px-3 py-2 text-sm text-brown outline-none focus:border-gold"
+                />
+              )}
+            </div>
+          );
+        })}
       </div>
     </div>
   );
@@ -361,6 +452,29 @@ function ImageManager({
       )}
     </div>
   );
+}
+
+// The Language option must always exist, be first, and be required —
+// across every product, whether brand new or already saved before this
+// feature existed. This is the single place that guarantee lives, so
+// both "add" and "edit" paths (and the save-time safety net) stay in sync.
+function withLanguageEnforced(options: CustomizationOption[]): CustomizationOption[] {
+  const languagePreset = OPTION_PRESETS['Language'];
+  const existingIndex = options.findIndex((o) => o.name === 'Language');
+
+  if (existingIndex === -1) {
+    const seeded: CustomizationOption = {
+      id: `opt-language-${Date.now()}`,
+      product_id: '',
+      sort_order: 0,
+      ...languagePreset,
+    };
+    return [seeded, ...options];
+  }
+
+  const existing = { ...options[existingIndex], required: true };
+  const rest = options.filter((_, i) => i !== existingIndex);
+  return [existing, ...rest];
 }
 
 // ---------- Main panel ----------
@@ -472,19 +586,21 @@ export default function ProductsPanel() {
     }
 
     setCustomOptions(
-      (data || []).map((row: any) => ({
-        id: row.id,
-        product_id: row.product_id,
-        name: row.name,
-        type: row.type,
-        required: row.required,
-        options: (row.options || []).map((c: any, i: number) => ({
-          ...c,
-          id: c.id || `choice-${row.id}-${i}`,
-          sku: c.sku || '',
-        })),
-        sort_order: row.sort_order,
-      }))
+      withLanguageEnforced(
+        (data || []).map((row: any) => ({
+          id: row.id,
+          product_id: row.product_id,
+          name: row.name,
+          type: row.type,
+          required: row.required,
+          options: (row.options || []).map((c: any, i: number) => ({
+            ...c,
+            id: c.id || `choice-${row.id}-${i}`,
+            sku: c.sku || '',
+          })),
+          sort_order: row.sort_order,
+        }))
+      )
     );
   }
 
@@ -579,7 +695,8 @@ export default function ProductsPanel() {
         await adminApi.saveProductImages(productId!, images);
 
         if (form.isCustomizable && customOptions.length > 0) {
-          const normalizedOptions = customOptions.map((opt) => ({
+          const enforced = withLanguageEnforced(customOptions);
+          const normalizedOptions = enforced.map((opt) => ({
             ...opt,
             options: opt.options.map((c) => ({ ...c, sku: (c.sku || '').toUpperCase() })),
           }));
@@ -699,7 +816,16 @@ export default function ProductsPanel() {
               <input
                 type="checkbox"
                 checked={form.isCustomizable}
-                onChange={(e) => setForm({ ...form, isCustomizable: e.target.checked })}
+                onChange={(e) => {
+                  const nowCustomizable = e.target.checked;
+                  setForm({ ...form, isCustomizable: nowCustomizable });
+                  // Arabic/English is the mandatory default option for every
+                  // customizable product, across every category — enforced
+                  // here rather than relying on the admin to add it.
+                  if (nowCustomizable) {
+                    setCustomOptions((prev) => withLanguageEnforced(prev));
+                  }
+                }}
                 className="h-4 w-4 accent-brown"
               />
               <span className="text-sm text-brown">This product is customizable</span>

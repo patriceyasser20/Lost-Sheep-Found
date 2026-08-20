@@ -39,6 +39,7 @@ export const mockPromoCodes: PromoCode[] = [
 export type SaleSettings = {
   title: string;
   subtitle: string;
+  bannerText: string;   // ← new
   categorySlugs: string[];
   discountPct: number;
   active: boolean;

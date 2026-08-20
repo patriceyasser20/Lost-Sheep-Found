@@ -182,29 +182,32 @@ async function call(action: string, payload: any = {}) {
   sendNewsletter: (payload: any) => call('send-newsletter', payload),
 
    async getSaleSettings(): Promise<SaleSettings> {
-    const data = await call('get-sale-settings');
-    return {
-      title: data?.title ?? '15% off, this week only',
-      subtitle: data?.subtitle ?? 'Use code ADVENT15 at checkout on any journal or wood verse piece.',
-      categorySlugs: data?.category_slugs ?? [],
-      discountPct: Number(data?.discount_pct) || 0,
-      active: data?.active ?? true,
-    };
-  },
-  async updateSaleSettings(payload: SaleSettings) {
-    const data = await call('update-sale-settings', {
-      title: payload.title,
-      subtitle: payload.subtitle,
-      category_slugs: payload.categorySlugs,
-      discount_pct: payload.discountPct,
-      active: payload.active,
-    });
-    return {
-      title: data.title,
-      subtitle: data.subtitle,
-      categorySlugs: data.category_slugs ?? [],
-      discountPct: Number(data.discount_pct) || 0,
-      active: data.active ?? true,
-    } as SaleSettings;
-  },
+  const data = await call('get-sale-settings');
+  return {
+    title: data?.title ?? '15% off, this week only',
+    subtitle: data?.subtitle ?? '',
+    bannerText: data?.banner_text ?? '',
+    categorySlugs: data?.category_slugs ?? [],
+    discountPct: data?.discount_pct ?? 0,
+    active: data?.active ?? true,
+  };
+},
+async updateSaleSettings(payload: SaleSettings) {
+  const data = await call('update-sale-settings', {
+    title: payload.title,
+    subtitle: payload.subtitle,
+    banner_text: payload.bannerText,
+    category_slugs: payload.categorySlugs,
+    discount_pct: payload.discountPct,
+    active: payload.active,
+  });
+  return {
+    title: data.title,
+    subtitle: data.subtitle,
+    bannerText: data.banner_text ?? '',
+    categorySlugs: data.category_slugs ?? [],
+    discountPct: data.discount_pct ?? 0,
+    active: data.active ?? true,
+  } as SaleSettings;
+},
 };

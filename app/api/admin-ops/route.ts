@@ -239,33 +239,35 @@ const handlers: Record<string, (payload: any) => Promise<any>> = {
       .order('created_at', { ascending: false })
   ),
       'get-sale-settings': async () => {
-    const { data, error } = await supabaseAdmin()
-      .from('sale_settings')
-      .select('*')
-      .eq('id', 'default')
-      .maybeSingle();
-    if (error) throw new Error(error.message);
-    return data;
-  },
+        const { data, error } = await supabaseAdmin()
+          .from('sale_settings')
+          .select('*')
+          .eq('id', 'default')
+          .maybeSingle();
+        if (error) throw new Error(error.message);
+        return data;
+      },
 
   'update-sale-settings': async (payload) => {
-    const { data, error } = await supabaseAdmin()
-      .from('sale_settings')
-      .upsert(
-        {
-          id: 'default',
-          title: payload.title,
-          subtitle: payload.subtitle,
-          category_slugs: payload.category_slugs,
-          active: payload.active,   // ← this was missing
-        },
-        { onConflict: 'id' }
-      )
-      .select()
-      .single();
-    if (error) throw new Error(error.message);
-    return data;
-  },
+      const { data, error } = await supabaseAdmin()
+        .from('sale_settings')
+        .upsert(
+          {
+            id: 'default',
+            title: payload.title,
+            subtitle: payload.subtitle,
+            banner_text: payload.banner_text,
+            category_slugs: payload.category_slugs,
+            discount_pct: payload.discount_pct,
+            active: payload.active,
+          },
+          { onConflict: 'id' }
+        )
+        .select()
+        .single();
+      if (error) throw new Error(error.message);
+      return data;
+    },
 
 };
 

@@ -37,7 +37,22 @@ export function swatchFor(label: string): string | undefined {
   return COLOR_SWATCHES[label.trim().toLowerCase()];
 }
 
+// NOTE: 'Language' is intentionally the first key in this object. Object
+// key order drives both the "+ preset" button order in ProductsPanel and
+// (via ProductsPanel's auto-seed on enabling customization) which option
+// ends up first in a new product's list — Arabic/English should always be
+// the option a product starts with, across every category, not just
+// something the admin remembers to add.
 export const OPTION_PRESETS: Record<string, Omit<CustomizationOption, 'id' | 'product_id' | 'sort_order'>> = {
+  Language: {
+    name: 'Language',
+    type: 'select',
+    required: true,
+    options: [
+      { id: 'language-ar', label: 'Arabic', sku: 'AR' },
+      { id: 'language-en', label: 'English', sku: 'EN' },
+    ],
+  },
   Cover: {
     name: 'Cover',
     type: 'select',

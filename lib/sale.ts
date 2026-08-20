@@ -24,3 +24,17 @@ export async function getActiveSaleClient(): Promise<SaleSettings | null> {
     active: data.active,
   };
 }
+export async function getSaleBannerClient(): Promise<{ text: string; href: string } | null> {
+  const { data, error } = await supabaseClient
+    .from('sale_settings')
+    .select('active, banner_text, title')
+    .eq('id', 'default')
+    .maybeSingle();
+
+  if (error || !data || !data.active) return null;
+
+  const text = (data.banner_text || data.title || '').trim();
+  if (!text) return null;
+
+  return { text, href: '/sale' };
+}

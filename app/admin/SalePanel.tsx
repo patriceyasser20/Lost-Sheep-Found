@@ -5,8 +5,7 @@ import { supabaseClient } from '../../lib/supabaseClient';
 import { adminApi } from '../../lib/adminApi';
 import type { SaleSettings } from '../../lib/adminTypes';
 import { mockSaleHistory } from '../../lib/adminTypes';
-
-const EMPTY: SaleSettings = { title: '', subtitle: '', categorySlugs: [], discountPct: 0, active: true };
+const EMPTY: SaleSettings = { title: '', subtitle: '', bannerText: '', categorySlugs: [], discountPct: 0, active: true };
 
 export default function SalePanel() {
   const [categories, setCategories] = useState<{ id: string; name: string; slug: string }[]>([]);
@@ -21,12 +20,13 @@ export default function SalePanel() {
     ]).then(([catRes, saleSettings]) => {
       setCategories(catRes.data || []);
       setSettings({
-      title: saleSettings?.title ?? EMPTY.title,
-      subtitle: saleSettings?.subtitle ?? EMPTY.subtitle,
-      categorySlugs: saleSettings?.categorySlugs ?? EMPTY.categorySlugs,
-      discountPct: saleSettings?.discountPct ?? EMPTY.discountPct,
-      active: saleSettings?.active ?? EMPTY.active,
-    });
+        title: saleSettings?.title ?? EMPTY.title,
+        subtitle: saleSettings?.subtitle ?? EMPTY.subtitle,
+        bannerText: saleSettings?.bannerText ?? EMPTY.bannerText,
+        categorySlugs: saleSettings?.categorySlugs ?? EMPTY.categorySlugs,
+        discountPct: saleSettings?.discountPct ?? EMPTY.discountPct,
+        active: saleSettings?.active ?? EMPTY.active,
+      });
       setLoading(false);
     });
   }, []);
@@ -65,6 +65,7 @@ export default function SalePanel() {
       setSettings({
         title: updated?.title ?? intent.title,
         subtitle: updated?.subtitle ?? intent.subtitle,
+        bannerText: updated?.bannerText ?? intent.bannerText,
         categorySlugs: updated?.categorySlugs ?? intent.categorySlugs,
         discountPct: updated?.discountPct ?? intent.discountPct,
         active: intent.active,
@@ -149,6 +150,21 @@ export default function SalePanel() {
               placeholder="Use code ADVENT15 at checkout on any journal or wood verse piece."
               className="h-20 w-full resize-y border border-line bg-cream px-3 py-2 text-sm outline-none focus:border-gold"
             />
+          </div>
+          
+          <div>
+            <label className="mb-2 block text-[10px] uppercase tracking-[.12em] text-brown-soft">
+              Banner text
+            </label>
+            <input
+              value={settings.bannerText}
+              onChange={(e) => setSettings({ ...settings, bannerText: e.target.value })}
+              placeholder="Advent sale — 15% off journals and wood verses, this week only"
+              className="w-full border border-line bg-cream px-3 py-2 text-sm outline-none focus:border-gold"
+            />
+            <p className="mt-1.5 text-[11.5px] text-brown-soft">
+              Shown in the site-wide banner at the top of every page while the sale is active. Leave blank to use the Title instead.
+            </p>
           </div>
 
           <div>

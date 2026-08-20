@@ -1,17 +1,57 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { X } from 'lucide-react';
+import { getSaleBannerClient } from '../../lib/sale';
+import { getActiveOffersClient } from '../../lib/offers';
+
+type BannerData = { text: string; href: string };
 
 export default function SeasonalBanner() {
   const [visible, setVisible] = useState(true);
-  if (!visible) return null;
+  const [banner, setBanner] = useState<BannerData | null>(null);
+  const [checked, setChecked] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+
+    (async () => {
+      const sale = await getSaleBannerClient();
+      if (!active) return;
+
+      if (sale) {
+        setBanner(sale);
+        setChecked(true);
+        return;
+      }
+
+      try {
+        const offers = await getActiveOffersClient();
+        if (!active) return;
+        setBanner(
+          offers && offers.length > 0
+            ? { text: 'New offers available — shop now', href: '/offers' }
+            : null
+        );
+      } catch {
+        if (active) setBanner(null);
+      } finally {
+        if (active) setChecked(true);
+      }
+    })();
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  if (!checked || !visible || !banner) return null;
 
   return (
     <div className="relative bg-brown px-10 py-[10px] text-center text-xs tracking-[.04em] text-cream">
-      <Link href="/sale" className="border-b border-gold pb-[2px]">
-        Advent sale — 15% off journals and wood verses, this week only
+      <Link href={banner.href} className="border-b border-gold pb-[2px]">
+        {banner.text}
       </Link>
       <button
         onClick={() => setVisible(false)}
